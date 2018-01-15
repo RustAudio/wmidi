@@ -200,6 +200,15 @@ pub enum Error {
     UnexpectedStatusByte,
 }
 
+pub type Note = i8;
+pub type ControlNumber = i8;
+pub type Velocity = i8;
+pub type ControlValue = i8;
+pub type ProgramNumber = i8;
+pub type PitchBend = i16;
+pub type SongPosition = i16;
+pub type Song = i8;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
     Ch1,
@@ -269,15 +278,6 @@ impl Channel {
     }
 }
 
-pub type Note = i8;
-pub type ControlNumber = i8;
-pub type Velocity = i8;
-pub type ControlValue = i8;
-pub type ProgramNumber = i8;
-pub type PitchBend = i16;
-pub type SongPosition = i16;
-pub type Song = i8;
-
 #[inline(always)]
 fn combine_data(lower: i8, higher: i8) -> i16 {
     (lower as i16) + 127 * (higher as i16)
@@ -346,5 +346,17 @@ mod test {
         }
         let b: &[u8] = &b;
         assert_eq!(b, &[0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);
+    }
+
+    #[test]
+    fn drop_sysex() {
+        assert_eq!(MidiMessage::SysEx(&[1, 2, 3]).drop_sysex(), None);
+        assert_eq!(MidiMessage::TuneRequest.drop_sysex(), Some(MidiMessage::TuneRequest));
+    }
+
+    #[test]
+    fn channel() {
+        assert_eq!(MidiMessage::ControlChange(Channel::Ch8, 1, 55).channel(), Some(Channel::Ch8));
+        assert_eq!(MidiMessage::Start.channel(), None);
     }
 }
