@@ -1,0 +1,7 @@
+[package]
+name = "wmidi"
+version = "0.1.0"
+authors = ["wmedrano <will.s.medrano@gmail.com>"]
+description = "Zero cost midi parsing library."
+
+[dependencies]
