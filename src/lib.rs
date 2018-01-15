@@ -1,30 +1,130 @@
-use std::io::Write;
 use std::io;
+use std::io::Write;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MidiMessage<'a> {
+    /// Note Off event.
+    ///
+    /// This message is sent when a note is released (ended).
     NoteOff(Channel, Note, Velocity),
+
+    /// Note On event.
+    ///
+    /// This message is sent when a note is depressed (start).
     NoteOn(Channel, Note, Velocity),
+
+    /// Polyphonic Key Pressure (Aftertouch).
+    ///
+    /// This message is most often sent by pressing down on the key after it "bottoms out".
     PolyphonicKeyPressure(Channel, Note, Velocity),
+
+    /// Control Change.
+    ///
+    /// This message is sent when a controller value changes. Controllers include devices such as
+    /// pedals and levers.
+    ///
+    /// Controller numbers 120-127 are reserved as "Channel Mode Messages".
     ControlChange(Channel, ControlNumber, ControlValue),
+
+    /// Program Change.
+    ///
+    /// This message is sent when the patch number changes.
     ProgramChange(Channel, ProgramNumber),
+
+    /// Channel Pressure (After-touch).
+    ///
+    /// This message is most often sent by pressing down on the key after it "bottoms out". This
+    /// message is different from polyphonic after-touch. Use this message to send the single
+    /// greatest pressure value (of all the current depressed keys).
     ChannelPressure(Channel, Velocity),
+
+    /// PitchBendChange.
+    ///
+    /// This message is sent to indicate a change in the pitch bender (wheel or level, typically).
+    /// The pitch bender is measured by a fourteen bit value. Center is 8192.
     PitchBendChange(Channel, PitchBend),
+
+    /// System Exclusive.
+    ///
+    /// This message type allows manufacturers to create their own messages (such as bulk dumps,
+    /// patch parameters, and other non-spec data) and provides a mechanism for creating
+    /// additional MIDI Specification messages.
+    ///
+    /// In the data held by the SysEx message, the Manufacturer's ID
+    /// code (assigned by MMA or AMEI) is either 1 byte or 3
+    /// bytes. Two of the 1 Byte IDs are reserved for extensions
+    /// called Universal Exclusive Messages, which are not
+    /// manufacturer-specific. If a device recognizes the ID code as
+    /// its own (or as a supported Universal message) it will listen
+    /// to the rest of the message. Otherwise the message will be
+    /// ignored.
     SysEx(&'a [U7]),
+
+    /// MIDI Time Code Quarter Frame.
+    ///
+    /// The data is in the format 0nnndddd where nnn is the Message Type and dddd is the Value.
+    ///
+    /// TODO: Interpret data instead of providing the raw format.
     MidiTimeCode(U7),
+
+    /// Song Position Pointer.
+    ///
+    /// This is an internal 14 bit value that holds the number of MIDI beats (1 beat = six MIDI
+    /// clocks) since the start of the song.
     SongPositionPointer(SongPosition),
+
+    /// Song Select.
+    ///
+    /// The Song Select specifies which sequence or song is to be played.
     SongSelect(Song),
+
+    /// Undefined. (Reserved)
+    ///
+    /// The u8 data holds the status byte.
     Reserved(u8),
+
+    /// Tune Request.
+    ///
+    /// Upon receiving a Tune Request, all analog synthesizers should tune their oscillators.
     TuneRequest,
+
+    /// Timing Clock. Sent 24 times per quarter note when synchronization is
+    /// required.
     TimingClock,
+
+    /// Start.
+    ///
+    /// Start the current sequence playing. (This message will be followed with Timing Clocks).
     Start,
+
+    /// Continue.
+    ///
+    /// Continue at the point the sequence was Stopped.
     Continue,
+
+    /// Stop.
+    ///
+    /// Stop the current sequence.
     Stop,
+
+    /// Active Sensing.
+    ///
+    /// This message is intended to be sent repeatedly to tell the receiver that a connection is
+    /// alive. Use of this message is optional. When initially received, the receiver will expect
+    /// to receive another Active Sensing message each 300ms (max), and if it idoes not, then it
+    /// will assume that the connection has been terminated. At termination, the receiver will
+    /// turn off all voices and return to normal (non-active sensing) operation.
     ActiveSensing,
+
+    /// Reset.
+    ///
+    /// Reset all receivers in the system to power-up status. This should be used sparingly,
+    /// preferably under manual control. In particular, it should not be sent on power-up.
     Reset,
 }
 
 impl<'a> MidiMessage<'a> {
+    /// Construct a midi message from bytes.
     pub fn from_bytes(bytes: &'a [u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
             return Err(Error::NoBytes);
@@ -89,13 +189,16 @@ impl<'a> MidiMessage<'a> {
         Ok(MidiMessage::SysEx(&bytes[1..end_i]))
     }
 
+    /// Return `Som(midi_message)` if `self` is not a SysEx message, or `None`
+    /// if it is. This expands the lifetime of the `MidiMessage` from `'a` to
+    /// `'static`.
     pub fn drop_sysex(self) -> Option<MidiMessage<'static>> {
         match self {
             MidiMessage::NoteOff(a, b, c) => Some(MidiMessage::NoteOff(a, b, c)),
             MidiMessage::NoteOn(a, b, c) => Some(MidiMessage::NoteOff(a, b, c)),
             MidiMessage::PolyphonicKeyPressure(a, b, c) => {
                 Some(MidiMessage::PolyphonicKeyPressure(a, b, c))
-            }
+            },
             MidiMessage::ControlChange(a, b, c) => Some(MidiMessage::ControlChange(a, b, c)),
             MidiMessage::ProgramChange(a, b) => Some(MidiMessage::ProgramChange(a, b)),
             MidiMessage::ChannelPressure(a, b) => Some(MidiMessage::ChannelPressure(a, b)),
@@ -115,6 +218,7 @@ impl<'a> MidiMessage<'a> {
         }
     }
 
+    /// The number of bytes the MIDI message takes.
     pub fn wire_size(&self) -> usize {
         match self {
             &MidiMessage::NoteOff(..) => 3,
@@ -139,6 +243,8 @@ impl<'a> MidiMessage<'a> {
         }
     }
 
+    /// The channel associated with the MIDI message, if applicable for the
+    /// message type.
     pub fn channel(&self) -> Option<Channel> {
         match self {
             &MidiMessage::NoteOff(c, ..) => Some(c),
@@ -152,6 +258,7 @@ impl<'a> MidiMessage<'a> {
         }
     }
 
+    /// Write the contents of the MIDI message as raw MIDI bytes.
     pub fn write(&self, w: &mut Write) -> Result<usize, io::Error> {
         match self {
             &MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
@@ -163,17 +270,17 @@ impl<'a> MidiMessage<'a> {
             &MidiMessage::PitchBendChange(a, b) => {
                 w.write(&[0xE0 | a.index()])?;
                 w.write(&split_data(b))
-            }
+            },
             &MidiMessage::SysEx(b) => {
                 w.write(&[0xF0])?;
                 w.write(b)?;
                 w.write(&[0xF7])
-            }
+            },
             &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
             &MidiMessage::SongPositionPointer(a) => {
                 w.write(&[0xF2])?;
                 w.write(&split_data(a))
-            }
+            },
             &MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
             &MidiMessage::Reserved(a) => w.write(&[a]),
             &MidiMessage::TuneRequest => w.write(&[0xF6]),
@@ -189,27 +296,64 @@ impl<'a> MidiMessage<'a> {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Error {
+    /// The MIDI channel is not between 1 and 16 inclusive.
     ChannelOutOfRange,
-    ExpectedSysExStartByte,
+
+    /// No MIDI bytes were provided.
     NoBytes,
+
+    /// A SysEx start byte was provided, but there was no corresponding SysEx
+    /// end byte.
     NoSysExEndByte,
+
+    /// Not enough data bytes for the specified MIDI message.
     NotEnoughBytes,
+
+    /// Found a SysEx end byte, but there was no start byte.
     UnexpectedEndSysExByte,
+
+    /// Found a status byte interleaved with SysEx data. SysEx messages should
+    /// be a start byte, followed by data bytes, and ending in a end byte.
     UnexpectedNonSysExEndByte(u8),
+
+    /// Found a status byte, but expected a `U7` data byte.
     UnexpectedStatusByte,
 }
 
+/// A data byte that holds 7 bits of information.
 pub type U7 = u8;
+
+/// A combination of 2 data bytes that holds 14 bits of information.
 pub type U14 = u16;
+
+/// Specifies a MIDI note.
 pub type Note = U7;
-pub type ControlNumber = U7;
+
+/// Specifies the velocity of an action (often key press, release, or
+/// aftertouch).
 pub type Velocity = U7;
+
+/// Specifies a MIDI control number.
+pub type ControlNumber = U7;
+
+/// Specifies the value of a MIDI control.
 pub type ControlValue = U7;
+
+/// Specifies a program. Sometimes known as patch.
 pub type ProgramNumber = U7;
+
+/// A 14bit value specifying the pitch bend. Neutral is 8192.
 pub type PitchBend = U14;
+
+/// 14 bit value that holds the number of MIDI beats (1 beat = six MIDI clocks)
+/// since the start of the song.
 pub type SongPosition = U14;
+
+/// A song or sequence.
 pub type Song = U7;
 
+/// The MIDI channel. There are 16 channels. They are numbered between 1 and 16
+/// inclusive, or indexed between 0 and 15 inclusive.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
     Ch1,
@@ -231,6 +375,7 @@ pub enum Channel {
 }
 
 impl Channel {
+    /// Get a MIDI channel from an index that is between 0 and 15 inclusive.
     pub fn from_index(i: u8) -> Result<Channel, Error> {
         match i {
             0 => Ok(Channel::Ch1),
@@ -253,6 +398,7 @@ impl Channel {
         }
     }
 
+    /// The index of this midi channel. The returned value is between 0 and 15 inclusive.
     pub fn index(&self) -> u8 {
         match self {
             &Channel::Ch1 => 0,
@@ -274,25 +420,18 @@ impl Channel {
         }
     }
 
-    pub fn number(&self) -> u8 {
-        self.index() + 1
-    }
+    /// The number of this midi channel. The returned value is between 1 and 16 inclusive.
+    pub fn number(&self) -> u8 { self.index() + 1 }
 }
 
 #[inline(always)]
-fn combine_data(lower: U7, higher: U7) -> U14 {
-    (lower as U14) + 128 * (higher as U14)
-}
+fn combine_data(lower: U7, higher: U7) -> U14 { (lower as U14) + 128 * (higher as U14) }
 
 #[inline(always)]
-fn split_data(data: U14) -> [U7; 2] {
-    [(data % 128) as U7, (data / 127) as U7]
-}
+fn split_data(data: U14) -> [U7; 2] { [(data % 128) as U7, (data / 128) as U7] }
 
 #[inline(always)]
-fn is_status_byte(b: u8) -> bool {
-    b & 0x80 == 0x80
-}
+fn is_status_byte(b: u8) -> bool { b & 0x80 == 0x80 }
 
 #[inline(always)]
 fn valid_data_byte(b: &u8) -> Result<U7, Error> {
