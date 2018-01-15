@@ -156,12 +156,10 @@ impl<'a> MidiMessage<'a> {
         match self {
             &MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
             &MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
-            &MidiMessage::PolyphonicKeyPressure(a, b, c) => {
-                w.write(&[0xA0 | a.index(), b , c ])
-            }
-            &MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b , c ]),
-            &MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b ]),
-            &MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b ]),
+            &MidiMessage::PolyphonicKeyPressure(a, b, c) => w.write(&[0xA0 | a.index(), b, c]),
+            &MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b, c]),
+            &MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b]),
+            &MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b]),
             &MidiMessage::PitchBendChange(a, b) => {
                 w.write(&[0xE0 | a.index()])?;
                 w.write(&split_data(b))
@@ -171,12 +169,12 @@ impl<'a> MidiMessage<'a> {
                 w.write(b)?;
                 w.write(&[0xF7])
             }
-            &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a ]),
+            &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
             &MidiMessage::SongPositionPointer(a) => {
                 w.write(&[0xF2])?;
                 w.write(&split_data(a))
             }
-            &MidiMessage::SongSelect(a) => w.write(&[0xF3, a ]),
+            &MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
             &MidiMessage::Reserved(a) => w.write(&[a]),
             &MidiMessage::TuneRequest => w.write(&[0xF6]),
             &MidiMessage::TimingClock => w.write(&[0xF8]),
