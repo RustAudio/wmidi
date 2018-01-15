@@ -283,12 +283,12 @@ impl Channel {
 
 #[inline(always)]
 fn combine_data(lower: U7, higher: U7) -> U14 {
-    (lower as U14) + 127 * (higher as U14)
+    (lower as U14) + 128 * (higher as U14)
 }
 
 #[inline(always)]
 fn split_data(data: U14) -> [U7; 2] {
-    [(data % 127) as U7, (data / 127) as U7]
+    [(data % 128) as U7, (data / 127) as U7]
 }
 
 #[inline(always)]
@@ -352,7 +352,7 @@ mod test {
         );
         assert_eq!(
             MidiMessage::from_bytes(&[0xE4, 64, 100]),
-            Ok(MidiMessage::PitchBendChange(Channel::Ch5, 12764))
+            Ok(MidiMessage::PitchBendChange(Channel::Ch5, 12864))
         );
     }
 
