@@ -10,8 +10,8 @@ pub enum MidiMessage<'a> {
     ProgramChange(Channel, ProgramNumber),
     ChannelPressure(Channel, Velocity),
     PitchBendChange(Channel, PitchBend),
-    SysEx(&'a [u8]),
-    MidiTimeCode(i8),
+    SysEx(&'a [U7]),
+    MidiTimeCode(U7),
     SongPositionPointer(SongPosition),
     SongSelect(Song),
     Reserved(u8),
@@ -77,11 +77,12 @@ impl<'a> MidiMessage<'a> {
     #[inline(always)]
     fn new_sysex(bytes: &'a [u8]) -> Result<Self, Error> {
         debug_assert!(bytes[0] == 0xF0);
-        let end_i = 1 + bytes[1..]
-            .iter()
-            .cloned()
-            .position(is_status_byte)
-            .ok_or(Error::NoSysExEndByte)?;
+        let end_i = 1
+            + bytes[1..]
+                .iter()
+                .cloned()
+                .position(is_status_byte)
+                .ok_or(Error::NoSysExEndByte)?;
         if bytes[end_i] != 0xF7 {
             return Err(Error::UnexpectedNonSysExEndByte(bytes[end_i]));
         }
@@ -153,14 +154,14 @@ impl<'a> MidiMessage<'a> {
 
     pub fn write(&self, w: &mut Write) -> Result<usize, io::Error> {
         match self {
-            &MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b as u8, c as u8]),
-            &MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b as u8, c as u8]),
+            &MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
+            &MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
             &MidiMessage::PolyphonicKeyPressure(a, b, c) => {
-                w.write(&[0xA0 | a.index(), b as u8, c as u8])
+                w.write(&[0xA0 | a.index(), b , c ])
             }
-            &MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b as u8, c as u8]),
-            &MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b as u8]),
-            &MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b as u8]),
+            &MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b , c ]),
+            &MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b ]),
+            &MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b ]),
             &MidiMessage::PitchBendChange(a, b) => {
                 w.write(&[0xE0 | a.index()])?;
                 w.write(&split_data(b))
@@ -170,12 +171,12 @@ impl<'a> MidiMessage<'a> {
                 w.write(b)?;
                 w.write(&[0xF7])
             }
-            &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a as u8]),
+            &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a ]),
             &MidiMessage::SongPositionPointer(a) => {
                 w.write(&[0xF2])?;
                 w.write(&split_data(a))
             }
-            &MidiMessage::SongSelect(a) => w.write(&[0xF3, a as u8]),
+            &MidiMessage::SongSelect(a) => w.write(&[0xF3, a ]),
             &MidiMessage::Reserved(a) => w.write(&[a]),
             &MidiMessage::TuneRequest => w.write(&[0xF6]),
             &MidiMessage::TimingClock => w.write(&[0xF8]),
@@ -200,14 +201,16 @@ pub enum Error {
     UnexpectedStatusByte,
 }
 
-pub type Note = i8;
-pub type ControlNumber = i8;
-pub type Velocity = i8;
-pub type ControlValue = i8;
-pub type ProgramNumber = i8;
-pub type PitchBend = i16;
-pub type SongPosition = i16;
-pub type Song = i8;
+pub type U7 = u8;
+pub type U14 = u16;
+pub type Note = U7;
+pub type ControlNumber = U7;
+pub type Velocity = U7;
+pub type ControlValue = U7;
+pub type ProgramNumber = U7;
+pub type PitchBend = U14;
+pub type SongPosition = U14;
+pub type Song = U7;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Channel {
@@ -279,13 +282,13 @@ impl Channel {
 }
 
 #[inline(always)]
-fn combine_data(lower: i8, higher: i8) -> i16 {
-    (lower as i16) + 127 * (higher as i16)
+fn combine_data(lower: U7, higher: U7) -> U14 {
+    (lower as U14) + 127 * (higher as U14)
 }
 
 #[inline(always)]
-fn split_data(data: i16) -> [u8; 2] {
-    [(data % 127) as u8, (data / 127) as u8]
+fn split_data(data: U14) -> [U7; 2] {
+    [(data % 127) as U7, (data / 127) as U7]
 }
 
 #[inline(always)]
@@ -294,36 +297,63 @@ fn is_status_byte(b: u8) -> bool {
 }
 
 #[inline(always)]
-fn valid_data_byte(b: &u8) -> Result<i8, Error> {
+fn valid_data_byte(b: &u8) -> Result<U7, Error> {
     let x = b.clone();
     if is_status_byte(x) {
         Err(Error::UnexpectedStatusByte)
     } else {
-        Ok(x as i8)
+        Ok(x as U7)
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn from_raw() {
         assert_eq!(MidiMessage::from_bytes(&[0x84]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0x84, 64]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0x84, 64, 100]), Ok(MidiMessage::NoteOff(Channel::Ch5, 64, 100)));
-        
+        assert_eq!(
+            MidiMessage::from_bytes(&[0x84, 64]),
+            Err(Error::NotEnoughBytes)
+        );
+        assert_eq!(
+            MidiMessage::from_bytes(&[0x84, 64, 100]),
+            Ok(MidiMessage::NoteOff(Channel::Ch5, 64, 100))
+        );
+
         assert_eq!(MidiMessage::from_bytes(&[0x94]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0x94, 64]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0x94, 64, 100]), Ok(MidiMessage::NoteOn(Channel::Ch5, 64, 100)));
-        
-        assert_eq!(MidiMessage::from_bytes(&[0xF0, 4, 8, 12, 16, 0xF7]), Ok(MidiMessage::SysEx(&[4, 8, 12, 16])));
-        assert_eq!(MidiMessage::from_bytes(&[0xF0, 3, 6, 9, 12, 15, 0xF7, 125]), Ok(MidiMessage::SysEx(&[3, 6, 9, 12, 15])));
-        assert_eq!(MidiMessage::from_bytes(&[0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), Err(Error::NoSysExEndByte));
-        
+        assert_eq!(
+            MidiMessage::from_bytes(&[0x94, 64]),
+            Err(Error::NotEnoughBytes)
+        );
+        assert_eq!(
+            MidiMessage::from_bytes(&[0x94, 64, 100]),
+            Ok(MidiMessage::NoteOn(Channel::Ch5, 64, 100))
+        );
+
+        assert_eq!(
+            MidiMessage::from_bytes(&[0xF0, 4, 8, 12, 16, 0xF7]),
+            Ok(MidiMessage::SysEx(&[4, 8, 12, 16]))
+        );
+        assert_eq!(
+            MidiMessage::from_bytes(&[0xF0, 3, 6, 9, 12, 15, 0xF7, 125]),
+            Ok(MidiMessage::SysEx(&[3, 6, 9, 12, 15]))
+        );
+        assert_eq!(
+            MidiMessage::from_bytes(&[0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Err(Error::NoSysExEndByte)
+        );
+
         assert_eq!(MidiMessage::from_bytes(&[0xE4]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0xE4, 64]), Err(Error::NotEnoughBytes));
-        assert_eq!(MidiMessage::from_bytes(&[0xE4, 64, 100]), Ok(MidiMessage::PitchBendChange(Channel::Ch5, 12764)));
+        assert_eq!(
+            MidiMessage::from_bytes(&[0xE4, 64]),
+            Err(Error::NotEnoughBytes)
+        );
+        assert_eq!(
+            MidiMessage::from_bytes(&[0xE4, 64, 100]),
+            Ok(MidiMessage::PitchBendChange(Channel::Ch5, 12764))
+        );
     }
 
     #[test]
@@ -331,7 +361,9 @@ mod test {
         let mut b = [0u8; 6];
         {
             let mut b: &mut [u8] = &mut b;
-            MidiMessage::PolyphonicKeyPressure(Channel::Ch10, 93, 43).write(&mut b).unwrap();
+            MidiMessage::PolyphonicKeyPressure(Channel::Ch10, 93, 43)
+                .write(&mut b)
+                .unwrap();
         }
         let b: &[u8] = &b;
         assert_eq!(b, &[0xA9, 93, 43, 0, 0, 0]);
@@ -342,7 +374,9 @@ mod test {
         let mut b = [0u8; 8];
         {
             let mut b: &mut [u8] = &mut b;
-            MidiMessage::SysEx(&[10, 20, 30, 40, 50]).write(&mut b).unwrap();
+            MidiMessage::SysEx(&[10, 20, 30, 40, 50])
+                .write(&mut b)
+                .unwrap();
         }
         let b: &[u8] = &b;
         assert_eq!(b, &[0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);
@@ -351,12 +385,18 @@ mod test {
     #[test]
     fn drop_sysex() {
         assert_eq!(MidiMessage::SysEx(&[1, 2, 3]).drop_sysex(), None);
-        assert_eq!(MidiMessage::TuneRequest.drop_sysex(), Some(MidiMessage::TuneRequest));
+        assert_eq!(
+            MidiMessage::TuneRequest.drop_sysex(),
+            Some(MidiMessage::TuneRequest)
+        );
     }
 
     #[test]
     fn channel() {
-        assert_eq!(MidiMessage::ControlChange(Channel::Ch8, 1, 55).channel(), Some(Channel::Ch8));
+        assert_eq!(
+            MidiMessage::ControlChange(Channel::Ch8, 1, 55).channel(),
+            Some(Channel::Ch8)
+        );
         assert_eq!(MidiMessage::Start.channel(), None);
     }
 }
