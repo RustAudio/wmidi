@@ -1,51 +1,37 @@
 use std::io;
 use std::io::Write;
 
+/// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MidiMessage<'a> {
-    /// Note Off event.
-    ///
     /// This message is sent when a note is released (ended).
     NoteOff(Channel, Note, Velocity),
 
-    /// Note On event.
-    ///
     /// This message is sent when a note is depressed (start).
     NoteOn(Channel, Note, Velocity),
 
-    /// Polyphonic Key Pressure (Aftertouch).
-    ///
-    /// This message is most often sent by pressing down on the key after it "bottoms out".
+    /// This message is most often sent by pressing down on the key after it
+    /// "bottoms out".
     PolyphonicKeyPressure(Channel, Note, Velocity),
 
-    /// Control Change.
-    ///
     /// This message is sent when a controller value changes. Controllers include devices such as
     /// pedals and levers.
     ///
     /// Controller numbers 120-127 are reserved as "Channel Mode Messages".
     ControlChange(Channel, ControlNumber, ControlValue),
 
-    /// Program Change.
-    ///
     /// This message is sent when the patch number changes.
     ProgramChange(Channel, ProgramNumber),
 
-    /// Channel Pressure (After-touch).
-    ///
     /// This message is most often sent by pressing down on the key after it "bottoms out". This
     /// message is different from polyphonic after-touch. Use this message to send the single
     /// greatest pressure value (of all the current depressed keys).
     ChannelPressure(Channel, Velocity),
 
-    /// PitchBendChange.
-    ///
     /// This message is sent to indicate a change in the pitch bender (wheel or level, typically).
     /// The pitch bender is measured by a fourteen bit value. Center is 8192.
     PitchBendChange(Channel, PitchBend),
 
-    /// System Exclusive.
-    ///
     /// This message type allows manufacturers to create their own messages (such as bulk dumps,
     /// patch parameters, and other non-spec data) and provides a mechanism for creating
     /// additional MIDI Specification messages.
@@ -67,48 +53,34 @@ pub enum MidiMessage<'a> {
     /// TODO: Interpret data instead of providing the raw format.
     MidiTimeCode(U7),
 
-    /// Song Position Pointer.
-    ///
     /// This is an internal 14 bit value that holds the number of MIDI beats (1 beat = six MIDI
     /// clocks) since the start of the song.
     SongPositionPointer(SongPosition),
 
-    /// Song Select.
-    ///
     /// The Song Select specifies which sequence or song is to be played.
     SongSelect(Song),
 
-    /// Undefined. (Reserved)
-    ///
     /// The u8 data holds the status byte.
     Reserved(u8),
 
-    /// Tune Request.
-    ///
-    /// Upon receiving a Tune Request, all analog synthesizers should tune their oscillators.
+    /// Upon receiving a Tune Request, all analog synthesizers should tune
+    /// their oscillators.
     TuneRequest,
 
     /// Timing Clock. Sent 24 times per quarter note when synchronization is
     /// required.
     TimingClock,
 
-    /// Start.
-    ///
-    /// Start the current sequence playing. (This message will be followed with Timing Clocks).
+    /// Start the current sequence playing. (This message will be followed with
+    /// Timing Clocks).
     Start,
 
-    /// Continue.
-    ///
     /// Continue at the point the sequence was Stopped.
     Continue,
 
-    /// Stop.
-    ///
     /// Stop the current sequence.
     Stop,
 
-    /// Active Sensing.
-    ///
     /// This message is intended to be sent repeatedly to tell the receiver that a connection is
     /// alive. Use of this message is optional. When initially received, the receiver will expect
     /// to receive another Active Sensing message each 300ms (max), and if it idoes not, then it
@@ -116,8 +88,6 @@ pub enum MidiMessage<'a> {
     /// turn off all voices and return to normal (non-active sensing) operation.
     ActiveSensing,
 
-    /// Reset.
-    ///
     /// Reset all receivers in the system to power-up status. This should be used sparingly,
     /// preferably under manual control. In particular, it should not be sent on power-up.
     Reset,
@@ -189,7 +159,7 @@ impl<'a> MidiMessage<'a> {
         Ok(MidiMessage::SysEx(&bytes[1..end_i]))
     }
 
-    /// Return `Som(midi_message)` if `self` is not a SysEx message, or `None`
+    /// Return `Some(midi_message)` if `self` is not a SysEx message, or `None`
     /// if it is. This expands the lifetime of the `MidiMessage` from `'a` to
     /// `'static`.
     pub fn drop_sysex(self) -> Option<MidiMessage<'static>> {
@@ -294,6 +264,7 @@ impl<'a> MidiMessage<'a> {
     }
 }
 
+/// Midi encoding and decoding errors.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Error {
     /// The MIDI channel is not between 1 and 16 inclusive.
@@ -398,7 +369,8 @@ impl Channel {
         }
     }
 
-    /// The index of this midi channel. The returned value is between 0 and 15 inclusive.
+    /// The index of this midi channel. The returned value is between 0 and 15
+    /// inclusive.
     pub fn index(&self) -> u8 {
         match self {
             &Channel::Ch1 => 0,
@@ -420,7 +392,8 @@ impl Channel {
         }
     }
 
-    /// The number of this midi channel. The returned value is between 1 and 16 inclusive.
+    /// The number of this midi channel. The returned value is between 1 and 16
+    /// inclusive.
     pub fn number(&self) -> u8 { self.index() + 1 }
 }
 
