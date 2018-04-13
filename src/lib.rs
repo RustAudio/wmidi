@@ -264,6 +264,42 @@ impl<'a> MidiMessage<'a> {
     }
 }
 
+impl<'a> io::Read for MidiMessage<'a> {
+    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
+        match self {
+            &mut MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), b, c]),
+            &mut MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), b, c]),
+            &mut MidiMessage::PolyphonicKeyPressure(a, b, c) => buf.write(&[0xA0 | a.index(), b, c]),
+            &mut MidiMessage::ControlChange(a, b, c) => buf.write(&[0xB0 | a.index(), b, c]),
+            &mut MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), b]),
+            &mut MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), b]),
+            &mut MidiMessage::PitchBendChange(a, b) => {
+                buf.write(&[0xE0 | a.index()])?;
+                buf.write(&split_data(b))
+            },
+            &mut MidiMessage::SysEx(b) => {
+                buf.write(&[0xF0])?;
+                buf.write(b)?;
+                buf.write(&[0xF7])
+            },
+            &mut MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, a]),
+            &mut MidiMessage::SongPositionPointer(a) => {
+                buf.write(&[0xF2])?;
+                buf.write(&split_data(a))
+            },
+            &mut MidiMessage::SongSelect(a) => buf.write(&[0xF3, a]),
+            &mut MidiMessage::Reserved(a) => buf.write(&[a]),
+            &mut MidiMessage::TuneRequest => buf.write(&[0xF6]),
+            &mut MidiMessage::TimingClock => buf.write(&[0xF8]),
+            &mut MidiMessage::Start => buf.write(&[0xFA]),
+            &mut MidiMessage::Continue => buf.write(&[0xFB]),
+            &mut MidiMessage::Stop => buf.write(&[0xFC]),
+            &mut MidiMessage::ActiveSensing => buf.write(&[0xFE]),
+            &mut MidiMessage::Reset => buf.write(&[0xFF]),
+        }
+    }
+}
+
 /// Midi encoding and decoding errors.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Error {
