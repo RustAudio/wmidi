@@ -325,7 +325,7 @@ pub type Song = U7;
 
 /// The MIDI channel. There are 16 channels. They are numbered between 1 and 16
 /// inclusive, or indexed between 0 and 15 inclusive.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Channel {
     Ch1,
     Ch2,
