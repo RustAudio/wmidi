@@ -103,11 +103,11 @@ impl<'a> MidiMessage<'a> {
         let data_a = bytes
             .get(1)
             .ok_or(Error::NotEnoughBytes)
-            .and_then(valid_data_byte);
+            .and_then(|b| valid_data_byte(*b));
         let data_b = bytes
             .get(2)
             .ok_or(Error::NotEnoughBytes)
-            .and_then(valid_data_byte);
+            .and_then(|b| valid_data_byte(*b));
         match bytes[0] & 0xF0 {
             0x80 => Ok(MidiMessage::NoteOff(chan, data_a?, data_b?)),
             0x90 => Ok(MidiMessage::NoteOn(chan, data_a?, data_b?)),
@@ -150,7 +150,7 @@ impl<'a> MidiMessage<'a> {
         let end_i = 1
             + bytes[1..]
                 .iter()
-                .cloned()
+                .copied()
                 .position(is_status_byte)
                 .ok_or(Error::NoSysExEndByte)?;
         if bytes[end_i] != 0xF7 {
@@ -190,112 +190,112 @@ impl<'a> MidiMessage<'a> {
 
     /// The number of bytes the MIDI message takes.
     pub fn wire_size(&self) -> usize {
-        match self {
-            &MidiMessage::NoteOff(..) => 3,
-            &MidiMessage::NoteOn(..) => 3,
-            &MidiMessage::PolyphonicKeyPressure(..) => 3,
-            &MidiMessage::ControlChange(..) => 3,
-            &MidiMessage::ProgramChange(..) => 2,
-            &MidiMessage::ChannelPressure(..) => 2,
-            &MidiMessage::PitchBendChange(..) => 2,
-            &MidiMessage::SysEx(ref b) => 2 + b.len(),
-            &MidiMessage::MidiTimeCode(_) => 2,
-            &MidiMessage::SongPositionPointer(_) => 3,
-            &MidiMessage::SongSelect(_) => 2,
-            &MidiMessage::Reserved(_) => 1,
-            &MidiMessage::TuneRequest => 1,
-            &MidiMessage::TimingClock => 1,
-            &MidiMessage::Start => 1,
-            &MidiMessage::Continue => 1,
-            &MidiMessage::Stop => 1,
-            &MidiMessage::ActiveSensing => 1,
-            &MidiMessage::Reset => 1,
+        match *self {
+            MidiMessage::NoteOff(..) => 3,
+            MidiMessage::NoteOn(..) => 3,
+            MidiMessage::PolyphonicKeyPressure(..) => 3,
+            MidiMessage::ControlChange(..) => 3,
+            MidiMessage::ProgramChange(..) => 2,
+            MidiMessage::ChannelPressure(..) => 2,
+            MidiMessage::PitchBendChange(..) => 2,
+            MidiMessage::SysEx(ref b) => 2 + b.len(),
+            MidiMessage::MidiTimeCode(_) => 2,
+            MidiMessage::SongPositionPointer(_) => 3,
+            MidiMessage::SongSelect(_) => 2,
+            MidiMessage::Reserved(_) => 1,
+            MidiMessage::TuneRequest => 1,
+            MidiMessage::TimingClock => 1,
+            MidiMessage::Start => 1,
+            MidiMessage::Continue => 1,
+            MidiMessage::Stop => 1,
+            MidiMessage::ActiveSensing => 1,
+            MidiMessage::Reset => 1,
         }
     }
 
     /// The channel associated with the MIDI message, if applicable for the
     /// message type.
     pub fn channel(&self) -> Option<Channel> {
-        match self {
-            &MidiMessage::NoteOff(c, ..) => Some(c),
-            &MidiMessage::NoteOn(c, ..) => Some(c),
-            &MidiMessage::PolyphonicKeyPressure(c, ..) => Some(c),
-            &MidiMessage::ControlChange(c, ..) => Some(c),
-            &MidiMessage::ProgramChange(c, ..) => Some(c),
-            &MidiMessage::ChannelPressure(c, ..) => Some(c),
-            &MidiMessage::PitchBendChange(c, ..) => Some(c),
+        match *self {
+            MidiMessage::NoteOff(c, ..) => Some(c),
+            MidiMessage::NoteOn(c, ..) => Some(c),
+            MidiMessage::PolyphonicKeyPressure(c, ..) => Some(c),
+            MidiMessage::ControlChange(c, ..) => Some(c),
+            MidiMessage::ProgramChange(c, ..) => Some(c),
+            MidiMessage::ChannelPressure(c, ..) => Some(c),
+            MidiMessage::PitchBendChange(c, ..) => Some(c),
             _ => None,
         }
     }
 
     /// Write the contents of the MIDI message as raw MIDI bytes.
     pub fn write(&self, w: &mut Write) -> Result<usize, io::Error> {
-        match self {
-            &MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
-            &MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
-            &MidiMessage::PolyphonicKeyPressure(a, b, c) => w.write(&[0xA0 | a.index(), b, c]),
-            &MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b, c]),
-            &MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b]),
-            &MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b]),
-            &MidiMessage::PitchBendChange(a, b) => {
-                w.write(&[0xE0 | a.index()])?;
+        match *self {
+            MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
+            MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
+            MidiMessage::PolyphonicKeyPressure(a, b, c) => w.write(&[0xA0 | a.index(), b, c]),
+            MidiMessage::ControlChange(a, b, c) => w.write(&[0xB0 | a.index(), b, c]),
+            MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b]),
+            MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b]),
+            MidiMessage::PitchBendChange(a, b) => {
+                w.write_all(&[0xE0 | a.index()])?;
                 w.write(&split_data(b))
             },
-            &MidiMessage::SysEx(b) => {
-                w.write(&[0xF0])?;
-                w.write(b)?;
+            MidiMessage::SysEx(b) => {
+                w.write_all(&[0xF0])?;
+                w.write_all(b)?;
                 w.write(&[0xF7])
             },
-            &MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
-            &MidiMessage::SongPositionPointer(a) => {
-                w.write(&[0xF2])?;
+            MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
+            MidiMessage::SongPositionPointer(a) => {
+                w.write_all(&[0xF2])?;
                 w.write(&split_data(a))
             },
-            &MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
-            &MidiMessage::Reserved(a) => w.write(&[a]),
-            &MidiMessage::TuneRequest => w.write(&[0xF6]),
-            &MidiMessage::TimingClock => w.write(&[0xF8]),
-            &MidiMessage::Start => w.write(&[0xFA]),
-            &MidiMessage::Continue => w.write(&[0xFB]),
-            &MidiMessage::Stop => w.write(&[0xFC]),
-            &MidiMessage::ActiveSensing => w.write(&[0xFE]),
-            &MidiMessage::Reset => w.write(&[0xFF]),
+            MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
+            MidiMessage::Reserved(a) => w.write(&[a]),
+            MidiMessage::TuneRequest => w.write(&[0xF6]),
+            MidiMessage::TimingClock => w.write(&[0xF8]),
+            MidiMessage::Start => w.write(&[0xFA]),
+            MidiMessage::Continue => w.write(&[0xFB]),
+            MidiMessage::Stop => w.write(&[0xFC]),
+            MidiMessage::ActiveSensing => w.write(&[0xFE]),
+            MidiMessage::Reset => w.write(&[0xFF]),
         }
     }
 }
 
 impl<'a> io::Read for MidiMessage<'a> {
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
-        match self {
-            &mut MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), b, c]),
-            &mut MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), b, c]),
-            &mut MidiMessage::PolyphonicKeyPressure(a, b, c) => buf.write(&[0xA0 | a.index(), b, c]),
-            &mut MidiMessage::ControlChange(a, b, c) => buf.write(&[0xB0 | a.index(), b, c]),
-            &mut MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), b]),
-            &mut MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), b]),
-            &mut MidiMessage::PitchBendChange(a, b) => {
-                buf.write(&[0xE0 | a.index()])?;
+        match *self {
+            MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), b, c]),
+            MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), b, c]),
+            MidiMessage::PolyphonicKeyPressure(a, b, c) => buf.write(&[0xA0 | a.index(), b, c]),
+            MidiMessage::ControlChange(a, b, c) => buf.write(&[0xB0 | a.index(), b, c]),
+            MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), b]),
+            MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), b]),
+            MidiMessage::PitchBendChange(a, b) => {
+                buf.write_all(&[0xE0 | a.index()])?;
                 buf.write(&split_data(b))
             },
-            &mut MidiMessage::SysEx(b) => {
-                buf.write(&[0xF0])?;
-                buf.write(b)?;
+            MidiMessage::SysEx(b) => {
+                buf.write_all(&[0xF0])?;
+                buf.write_all(b)?;
                 buf.write(&[0xF7])
             },
-            &mut MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, a]),
-            &mut MidiMessage::SongPositionPointer(a) => {
-                buf.write(&[0xF2])?;
+            MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, a]),
+            MidiMessage::SongPositionPointer(a) => {
+                buf.write_all(&[0xF2])?;
                 buf.write(&split_data(a))
             },
-            &mut MidiMessage::SongSelect(a) => buf.write(&[0xF3, a]),
-            &mut MidiMessage::Reserved(a) => buf.write(&[a]),
-            &mut MidiMessage::TuneRequest => buf.write(&[0xF6]),
-            &mut MidiMessage::TimingClock => buf.write(&[0xF8]),
-            &mut MidiMessage::Start => buf.write(&[0xFA]),
-            &mut MidiMessage::Continue => buf.write(&[0xFB]),
-            &mut MidiMessage::Stop => buf.write(&[0xFC]),
-            &mut MidiMessage::ActiveSensing => buf.write(&[0xFE]),
-            &mut MidiMessage::Reset => buf.write(&[0xFF]),
+            MidiMessage::SongSelect(a) => buf.write(&[0xF3, a]),
+            MidiMessage::Reserved(a) => buf.write(&[a]),
+            MidiMessage::TuneRequest => buf.write(&[0xF6]),
+            MidiMessage::TimingClock => buf.write(&[0xF8]),
+            MidiMessage::Start => buf.write(&[0xFA]),
+            MidiMessage::Continue => buf.write(&[0xFB]),
+            MidiMessage::Stop => buf.write(&[0xFC]),
+            MidiMessage::ActiveSensing => buf.write(&[0xFE]),
+            MidiMessage::Reset => buf.write(&[0xFF]),
         }
     }
 }
@@ -407,34 +407,48 @@ impl Channel {
 
     /// The index of this midi channel. The returned value is between 0 and 15
     /// inclusive.
-    pub fn index(&self) -> u8 {
+    pub fn index(self) -> u8 {
         match self {
-            &Channel::Ch1 => 0,
-            &Channel::Ch2 => 1,
-            &Channel::Ch3 => 2,
-            &Channel::Ch4 => 3,
-            &Channel::Ch5 => 4,
-            &Channel::Ch6 => 5,
-            &Channel::Ch7 => 6,
-            &Channel::Ch8 => 7,
-            &Channel::Ch9 => 8,
-            &Channel::Ch10 => 9,
-            &Channel::Ch11 => 10,
-            &Channel::Ch12 => 11,
-            &Channel::Ch13 => 12,
-            &Channel::Ch14 => 13,
-            &Channel::Ch15 => 14,
-            &Channel::Ch16 => 15,
+            Channel::Ch1 => 0,
+            Channel::Ch2 => 1,
+            Channel::Ch3 => 2,
+            Channel::Ch4 => 3,
+            Channel::Ch5 => 4,
+            Channel::Ch6 => 5,
+            Channel::Ch7 => 6,
+            Channel::Ch8 => 7,
+            Channel::Ch9 => 8,
+            Channel::Ch10 => 9,
+            Channel::Ch11 => 10,
+            Channel::Ch12 => 11,
+            Channel::Ch13 => 12,
+            Channel::Ch14 => 13,
+            Channel::Ch15 => 14,
+            Channel::Ch16 => 15,
         }
     }
 
     /// The number of this midi channel. The returned value is between 1 and 16
     /// inclusive.
-    pub fn number(&self) -> u8 { self.index() + 1 }
+    pub fn number(self) -> u8 { self.index() + 1 }
+}
+
+/// The frequency for `note` using the standard 440Hz tuning.
+#[inline(always)]
+pub fn note_to_frequency_f32(note: Note) -> f32 {
+    let exp = (f32::from(note) + 36.376_316) / 12.0;
+    2f32.powf(exp)
+}
+
+/// The frequency for `note` using the standard 440Hz tuning.
+#[inline(always)]
+pub fn note_to_frequency_f64(note: Note) -> f64 {
+    let exp = (f64::from(note) + 36.376_316_562_295_91) / 12.0;
+    2f64.powf(exp)
 }
 
 #[inline(always)]
-fn combine_data(lower: U7, higher: U7) -> U14 { (lower as U14) + 128 * (higher as U14) }
+fn combine_data(lower: U7, higher: U7) -> U14 { u16::from(lower) + 128 * u16::from(higher) }
 
 #[inline(always)]
 fn split_data(data: U14) -> [U7; 2] { [(data % 128) as U7, (data / 128) as U7] }
@@ -443,12 +457,11 @@ fn split_data(data: U14) -> [U7; 2] { [(data % 128) as U7, (data / 128) as U7] }
 fn is_status_byte(b: u8) -> bool { b & 0x80 == 0x80 }
 
 #[inline(always)]
-fn valid_data_byte(b: &u8) -> Result<U7, Error> {
-    let x = b.clone();
-    if is_status_byte(x) {
+fn valid_data_byte(b: u8) -> Result<U7, Error> {
+    if is_status_byte(b) {
         Err(Error::UnexpectedStatusByte)
     } else {
-        Ok(x as U7)
+        Ok(b as U7)
     }
 }
 
@@ -544,5 +557,14 @@ mod test {
             Some(Channel::Ch8)
         );
         assert_eq!(MidiMessage::Start.channel(), None);
+    }
+
+    #[test]
+    fn note_to_frequency() {
+        let a440_f64 = note_to_frequency_f64(69);
+        assert!((a440_f64 - 440.0).abs() < 1E-10, "{} != 440", a440_f64);
+
+        let a440_f32 = note_to_frequency_f32(69);
+        assert!((a440_f32 - 440.0).abs() < 1E-10, "{} != 440", a440_f32);
     }
 }
