@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io;
 use std::io::Write;
 
@@ -123,8 +124,7 @@ impl<'a> MidiMessage<'a> {
                 0xF0 => MidiMessage::new_sysex(bytes),
                 0xF1 => Ok(MidiMessage::MidiTimeCode(data_a?)),
                 0xF2 => Ok(MidiMessage::SongPositionPointer(combine_data(
-                    data_a?,
-                    data_b?,
+                    data_a?, data_b?,
                 ))),
                 0xF3 => Ok(MidiMessage::SongSelect(data_a?)),
                 0xF4 | 0xF5 => Ok(MidiMessage::Reserved(bytes[0])),
@@ -147,12 +147,11 @@ impl<'a> MidiMessage<'a> {
     #[inline(always)]
     fn new_sysex(bytes: &'a [u8]) -> Result<Self, Error> {
         debug_assert!(bytes[0] == 0xF0);
-        let end_i = 1
-            + bytes[1..]
-                .iter()
-                .copied()
-                .position(is_status_byte)
-                .ok_or(Error::NoSysExEndByte)?;
+        let end_i = 1 + bytes[1..]
+            .iter()
+            .copied()
+            .position(is_status_byte)
+            .ok_or(Error::NoSysExEndByte)?;
         if bytes[end_i] != 0xF7 {
             return Err(Error::UnexpectedNonSysExEndByte(bytes[end_i]));
         }
@@ -168,7 +167,7 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::NoteOn(a, b, c) => Some(MidiMessage::NoteOff(a, b, c)),
             MidiMessage::PolyphonicKeyPressure(a, b, c) => {
                 Some(MidiMessage::PolyphonicKeyPressure(a, b, c))
-            },
+            }
             MidiMessage::ControlChange(a, b, c) => Some(MidiMessage::ControlChange(a, b, c)),
             MidiMessage::ProgramChange(a, b) => Some(MidiMessage::ProgramChange(a, b)),
             MidiMessage::ChannelPressure(a, b) => Some(MidiMessage::ChannelPressure(a, b)),
@@ -240,17 +239,17 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::PitchBendChange(a, b) => {
                 w.write_all(&[0xE0 | a.index()])?;
                 w.write(&split_data(b))
-            },
+            }
             MidiMessage::SysEx(b) => {
                 w.write_all(&[0xF0])?;
                 w.write_all(b)?;
                 w.write(&[0xF7])
-            },
+            }
             MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
             MidiMessage::SongPositionPointer(a) => {
                 w.write_all(&[0xF2])?;
                 w.write(&split_data(a))
-            },
+            }
             MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
             MidiMessage::Reserved(a) => w.write(&[a]),
             MidiMessage::TuneRequest => w.write(&[0xF6]),
@@ -276,17 +275,17 @@ impl<'a> io::Read for MidiMessage<'a> {
             MidiMessage::PitchBendChange(a, b) => {
                 buf.write_all(&[0xE0 | a.index()])?;
                 buf.write(&split_data(b))
-            },
+            }
             MidiMessage::SysEx(b) => {
                 buf.write_all(&[0xF0])?;
                 buf.write_all(b)?;
                 buf.write(&[0xF7])
-            },
+            }
             MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, a]),
             MidiMessage::SongPositionPointer(a) => {
                 buf.write_all(&[0xF2])?;
                 buf.write(&split_data(a))
-            },
+            }
             MidiMessage::SongSelect(a) => buf.write(&[0xF3, a]),
             MidiMessage::Reserved(a) => buf.write(&[a]),
             MidiMessage::TuneRequest => buf.write(&[0xF6]),
@@ -430,7 +429,9 @@ impl Channel {
 
     /// The number of this midi channel. The returned value is between 1 and 16
     /// inclusive.
-    pub fn number(self) -> u8 { self.index() + 1 }
+    pub fn number(self) -> u8 {
+        self.index() + 1
+    }
 }
 
 /// The frequency for `note` using the standard 440Hz tuning.
@@ -448,13 +449,19 @@ pub fn note_to_frequency_f64(note: Note) -> f64 {
 }
 
 #[inline(always)]
-fn combine_data(lower: U7, higher: U7) -> U14 { u16::from(lower) + 128 * u16::from(higher) }
+fn combine_data(lower: U7, higher: U7) -> U14 {
+    u16::from(lower) + 128 * u16::from(higher)
+}
 
 #[inline(always)]
-fn split_data(data: U14) -> [U7; 2] { [(data % 128) as U7, (data / 128) as U7] }
+fn split_data(data: U14) -> [U7; 2] {
+    [(data % 128) as U7, (data / 128) as U7]
+}
 
 #[inline(always)]
-fn is_status_byte(b: u8) -> bool { b & 0x80 == 0x80 }
+fn is_status_byte(b: u8) -> bool {
+    b & 0x80 == 0x80
+}
 
 #[inline(always)]
 fn valid_data_byte(b: u8) -> Result<U7, Error> {
