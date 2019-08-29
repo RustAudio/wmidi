@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use std::io;
-use std::io::Write;
 
 /// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -228,7 +227,11 @@ impl<'a> MidiMessage<'a> {
     }
 
     /// Write the contents of the MIDI message as raw MIDI bytes.
-    pub fn write(&self, w: &mut Write) -> Result<usize, io::Error> {
+    #[deprecated(
+        since = "1.2.1",
+        note = "Use self.read from the std::io::Read trait."
+    )]
+    pub fn write(&self, w: &mut io::Write) -> Result<usize, io::Error> {
         match *self {
             MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
             MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
