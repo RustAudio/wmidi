@@ -463,6 +463,7 @@ fn valid_data_byte(b: u8) -> Result<U7, Error> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::io::Read;
 
     #[test]
     fn from_raw() {
@@ -511,29 +512,31 @@ mod test {
     }
 
     #[test]
-    fn write() {
-        let mut b = [0u8; 6];
-        {
-            let mut b: &mut [u8] = &mut b;
-            MidiMessage::PolyphonicKeyPressure(Channel::Ch10, 93, 43)
-                .write(&mut b)
+    fn read() {
+        let b = {
+            let mut b = [0u8; 6];
+            let bytes_read = MidiMessage::PolyphonicKeyPressure(Channel::Ch10, 93, 43)
+                .read(&mut b)
                 .unwrap();
-        }
-        let b: &[u8] = &b;
-        assert_eq!(b, &[0xA9, 93, 43, 0, 0, 0]);
+            assert_eq!(bytes_read, 3);
+            b
+        };
+        assert_eq!(b, [0xA9, 93, 43, 0, 0, 0]);
     }
 
     #[test]
-    fn write_sysex() {
-        let mut b = [0u8; 8];
-        {
-            let mut b: &mut [u8] = &mut b;
-            MidiMessage::SysEx(&[10, 20, 30, 40, 50])
-                .write(&mut b)
+    fn read_sysex() {
+        let b = {
+            let mut b = [0u8; 8];
+            let bytes_read = MidiMessage::SysEx(&[10, 20, 30, 40, 50])
+                .read(&mut b)
                 .unwrap();
-        }
-        let b: &[u8] = &b;
-        assert_eq!(b, &[0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);
+            const SYS_EX_START_BYTES: usize = 1;
+            const SYS_EX_END_BYTES: usize = 1;
+            assert_eq!(bytes_read, SYS_EX_START_BYTES + 5 + SYS_EX_END_BYTES);
+            b
+        };
+        assert_eq!(b, [0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);
     }
 
     #[test]
