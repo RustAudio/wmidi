@@ -1,5 +1,5 @@
-use std::convert::TryFrom;
 use std::io;
+use std::io::Write;
 
 /// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -227,11 +227,8 @@ impl<'a> MidiMessage<'a> {
     }
 
     /// Write the contents of the MIDI message as raw MIDI bytes.
-    #[deprecated(
-        since = "1.2.1",
-        note = "Use self.read from the std::io::Read trait."
-    )]
-    pub fn write(&self, w: &mut io::Write) -> Result<usize, io::Error> {
+    #[deprecated(since = "1.2.1", note = "Use self.read from the std::io::Read trait.")]
+    pub fn write(&self, w: &mut dyn io::Write) -> Result<usize, io::Error> {
         match *self {
             MidiMessage::NoteOff(a, b, c) => w.write(&[0x80 | a.index(), b, c]),
             MidiMessage::NoteOn(a, b, c) => w.write(&[0x90 | a.index(), b, c]),
@@ -240,19 +237,11 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), b]),
             MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), b]),
             MidiMessage::PitchBendChange(a, b) => {
-                w.write_all(&[0xE0 | a.index()])?;
-                w.write(&split_data(b))
+                Ok(w.write(&[0xE0 | a.index()])? + w.write(&split_data(b))?)
             }
-            MidiMessage::SysEx(b) => {
-                w.write_all(&[0xF0])?;
-                w.write_all(b)?;
-                w.write(&[0xF7])
-            }
+            MidiMessage::SysEx(b) => Ok(w.write(&[0xF0])? + w.write(b)? + w.write(&[0xF7])?),
             MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, a]),
-            MidiMessage::SongPositionPointer(a) => {
-                w.write_all(&[0xF2])?;
-                w.write(&split_data(a))
-            }
+            MidiMessage::SongPositionPointer(a) => Ok(w.write(&[0xF2])? + w.write(&split_data(a))?),
             MidiMessage::SongSelect(a) => w.write(&[0xF3, a]),
             MidiMessage::Reserved(a) => w.write(&[a]),
             MidiMessage::TuneRequest => w.write(&[0xF6]),
@@ -276,18 +265,14 @@ impl<'a> io::Read for MidiMessage<'a> {
             MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), b]),
             MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), b]),
             MidiMessage::PitchBendChange(a, b) => {
-                buf.write_all(&[0xE0 | a.index()])?;
-                buf.write(&split_data(b))
+                Ok(buf.write(&[0xE0 | a.index()])? + buf.write(&split_data(b))?)
             }
             MidiMessage::SysEx(b) => {
-                buf.write_all(&[0xF0])?;
-                buf.write_all(b)?;
-                buf.write(&[0xF7])
+                Ok(buf.write(&[0xF0])? + buf.write(b)? + buf.write(&[0xF7])?)
             }
             MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, a]),
             MidiMessage::SongPositionPointer(a) => {
-                buf.write_all(&[0xF2])?;
-                buf.write(&split_data(a))
+                Ok(buf.write(&[0xF2])? + buf.write(&split_data(a))?)
             }
             MidiMessage::SongSelect(a) => buf.write(&[0xF3, a]),
             MidiMessage::Reserved(a) => buf.write(&[a]),
