@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error;
+use std::fmt;
 
 /// Midi encoding and decoding errors.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -25,6 +25,9 @@ pub enum Error {
 
     /// Found a status byte, but expected a `U7` data byte.
     UnexpectedStatusByte,
+
+    /// Midi notes must be in the range [0, 127] inclusive.
+    NoteOutOfRange,
 }
 
 impl error::Error for Error {}

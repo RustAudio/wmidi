@@ -1,7 +1,7 @@
-use crate::Error;
+use crate::{Error, Note};
+use std::convert::TryFrom;
 use std::io;
 use std::io::Write;
-use std::convert::TryFrom;
 
 /// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -110,9 +110,21 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
             .ok_or(Error::NotEnoughBytes)
             .and_then(|b| valid_data_byte(*b));
         match bytes[0] & 0xF0 {
-            0x80 => Ok(MidiMessage::NoteOff(chan, data_a?, data_b?)),
-            0x90 => Ok(MidiMessage::NoteOn(chan, data_a?, data_b?)),
-            0xA0 => Ok(MidiMessage::PolyphonicKeyPressure(chan, data_a?, data_b?)),
+            0x80 => Ok(MidiMessage::NoteOff(
+                chan,
+                unsafe { Note::from_u8_unchecked(data_a?) },
+                data_b?,
+            )),
+            0x90 => Ok(MidiMessage::NoteOn(
+                chan,
+                unsafe { Note::from_u8_unchecked(data_a?) },
+                data_b?,
+            )),
+            0xA0 => Ok(MidiMessage::PolyphonicKeyPressure(
+                chan,
+                unsafe { Note::from_u8_unchecked(data_a?) },
+                data_b?,
+            )),
             0xB0 => Ok(MidiMessage::ControlChange(chan, data_a?, data_b?)),
             0xC0 => Ok(MidiMessage::ProgramChange(chan, data_a?)),
             0xD0 => Ok(MidiMessage::ChannelPressure(chan, data_a?)),
@@ -143,15 +155,11 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
             _ => unreachable!(),
         }
     }
-
 }
 
 impl<'a> MidiMessage<'a> {
     /// Construct a midi message from bytes. Use `MidiMessage::try_from(bytes)` instead.
-    #[deprecated(
-        since = "2.0.0",
-        note = "Use MidiMessage::try_from instead.",
-    )]
+    #[deprecated(since = "2.0.0", note = "Use MidiMessage::try_from instead.")]
     pub fn from_bytes(bytes: &'a [u8]) -> Result<Self, Error> {
         MidiMessage::try_from(bytes)
     }
@@ -268,15 +276,16 @@ impl<'a> MidiMessage<'a> {
         }
         Ok(MidiMessage::SysEx(&bytes[1..end_i]))
     }
-
 }
 
 impl<'a> io::Read for MidiMessage<'a> {
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         match self {
-            MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), *b, *c]),
-            MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), *b, *c]),
-            MidiMessage::PolyphonicKeyPressure(a, b, c) => buf.write(&[0xA0 | a.index(), *b, *c]),
+            MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), *b as u8, *c]),
+            MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), *b as u8, *c]),
+            MidiMessage::PolyphonicKeyPressure(a, b, c) => {
+                buf.write(&[0xA0 | a.index(), *b as u8, *c])
+            }
             MidiMessage::ControlChange(a, b, c) => buf.write(&[0xB0 | a.index(), *b, *c]),
             MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), *b]),
             MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), *b]),
@@ -315,9 +324,6 @@ pub type U7 = u8;
 
 /// A combination of 2 data bytes that holds 14 bits of information.
 pub type U14 = u16;
-
-/// Specifies a MIDI note.
-pub type Note = U7;
 
 /// Specifies the velocity of an action (often key press, release, or aftertouch).
 pub type Velocity = U7;
@@ -443,29 +449,35 @@ fn valid_data_byte(b: u8) -> Result<U7, Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Error;
+    use crate::{Error, Note};
     use std::io::Read;
 
     #[test]
     fn try_from() {
-        assert_eq!(MidiMessage::try_from([0x84].as_ref()), Err(Error::NotEnoughBytes));
+        assert_eq!(
+            MidiMessage::try_from([0x84].as_ref()),
+            Err(Error::NotEnoughBytes)
+        );
         assert_eq!(
             MidiMessage::try_from([0x84, 64].as_ref()),
             Err(Error::NotEnoughBytes)
         );
         assert_eq!(
             MidiMessage::try_from([0x84, 64, 100].as_ref()),
-            Ok(MidiMessage::NoteOff(Channel::Ch5, 64, 100))
+            Ok(MidiMessage::NoteOff(Channel::Ch5, Note::E3, 100))
         );
 
-        assert_eq!(MidiMessage::try_from([0x94].as_ref()), Err(Error::NotEnoughBytes));
+        assert_eq!(
+            MidiMessage::try_from([0x94].as_ref()),
+            Err(Error::NotEnoughBytes)
+        );
         assert_eq!(
             MidiMessage::try_from([0x94, 64].as_ref()),
             Err(Error::NotEnoughBytes)
         );
         assert_eq!(
             MidiMessage::try_from([0x94, 64, 100].as_ref()),
-            Ok(MidiMessage::NoteOn(Channel::Ch5, 64, 100))
+            Ok(MidiMessage::NoteOn(Channel::Ch5, Note::E3, 100))
         );
 
         assert_eq!(
@@ -481,7 +493,10 @@ mod test {
             Err(Error::NoSysExEndByte)
         );
 
-        assert_eq!(MidiMessage::try_from([0xE4].as_ref()), Err(Error::NotEnoughBytes));
+        assert_eq!(
+            MidiMessage::try_from([0xE4].as_ref()),
+            Err(Error::NotEnoughBytes)
+        );
         assert_eq!(
             MidiMessage::try_from([0xE4, 64].as_ref()),
             Err(Error::NotEnoughBytes)
@@ -496,7 +511,7 @@ mod test {
     fn read() {
         let b = {
             let mut b = [0u8; 6];
-            let bytes_read = MidiMessage::PolyphonicKeyPressure(Channel::Ch10, 93, 43)
+            let bytes_read = MidiMessage::PolyphonicKeyPressure(Channel::Ch10, Note::A5, 43)
                 .read(&mut b)
                 .unwrap();
             assert_eq!(bytes_read, 3);
