@@ -10,7 +10,7 @@ use std::fmt;
 /// # Example
 /// ```
 /// use wmidi::Note;
-/// let ab7_chord = [Note::AbMinus1, Note::C4, Note::Gb4] // We omit the 5th for a jazzier sound;
+/// let ab7_chord = [Note::AbMinus1, Note::C4, Note::Gb4]; // We omit the 5th for a jazzier sound
 /// let dmaj_chord = [Note::D2, Note::FSharp3, Note::ASharp3];
 /// ```
 #[repr(u8)]
@@ -150,9 +150,6 @@ pub enum Note {
 
 #[allow(non_upper_case_globals)]
 impl Note {
-    pub const LOWEST_NOTE: Note = Note::CMinus2;
-    pub const HIGHEST_NOTE: Note = Note::G8;
-
     pub const CSharpMinus2: Note = Note::DbMinus2;
     pub const DSharpMinus2: Note = Note::EbMinus2;
     pub const FSharpMinus2: Note = Note::GbMinus2;
@@ -207,6 +204,12 @@ impl Note {
     pub const DSharp8: Note = Note::Eb8;
     pub const FSharp8: Note = Note::Gb8;
 
+    /// The lowest representable note.
+    pub const LOWEST_NOTE: Note = Note::CMinus2;
+
+    /// The highest representable note.
+    pub const HIGHEST_NOTE: Note = Note::G8;
+
     /// Creates a note from a `u8`. `note` must be between [0, 127] inclusive to create a valid
     /// note.
     ///
@@ -245,6 +248,26 @@ impl Note {
     pub fn to_freq_f64(self) -> f64 {
         let exp = (f64::from(self as u8) + 36.376_316_562_295_91) / 12.0;
         2f64.powf(exp)
+    }
+
+    /// Get the note relative to `self`.
+    ///
+    /// # Example
+    /// ```
+    /// use wmidi::Note;
+    /// fn minor_chord(root: Note) -> Result<[Note; 3], wmidi::Error> {
+    ///     Ok([root, root.step(3)?, root.step(7)?])
+    /// }
+    /// assert_eq!(minor_chord(Note::C2), Ok([Note::C2, Note::Eb2, Note::G2]));
+    /// ```
+    pub fn step(self, half_steps: i8) -> Result<Note, Error> {
+        let half_steps: i16 = half_steps.into();
+        let raw_note = self as i16 + half_steps;
+        if Note::LOWEST_NOTE as i16 <= raw_note && raw_note <= Note::HIGHEST_NOTE as i16 {
+            Ok(unsafe{Note::from_u8_unchecked(raw_note as u8)})
+        } else {
+            Err(Error::NoteOutOfRange)
+        }
     }
 }
 
@@ -432,5 +455,14 @@ mod test {
 
         let a440_f32 = Note::A3.to_freq_f32();
         assert!((a440_f32 - 440.0).abs() < 1E-10, "{} != 440", a440_f32);
+    }
+
+    #[test]
+    fn step() {
+        assert_eq!(Note::CMinus2.step(12), Ok(Note::CMinus1));
+        assert_eq!(Note::CMinus1.step(-12), Ok(Note::CMinus2));
+        assert_eq!(Note::B3.step(1), Ok(Note::C4));
+        assert_eq!(Note::B3.step(100), Err(Error::NoteOutOfRange));
+        assert_eq!(Note::B3.step(-100), Err(Error::NoteOutOfRange));
     }
 }
