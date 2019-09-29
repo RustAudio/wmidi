@@ -161,7 +161,7 @@ impl<'a> MidiMessage<'a> {
     pub fn drop_unowned_sysex(self) -> Option<MidiMessage<'static>> {
         match self {
             MidiMessage::NoteOff(a, b, c) => Some(MidiMessage::NoteOff(a, b, c)),
-            MidiMessage::NoteOn(a, b, c) => Some(MidiMessage::NoteOff(a, b, c)),
+            MidiMessage::NoteOn(a, b, c) => Some(MidiMessage::NoteOn(a, b, c)),
             MidiMessage::PolyphonicKeyPressure(a, b, c) => {
                 Some(MidiMessage::PolyphonicKeyPressure(a, b, c))
             }
@@ -191,7 +191,7 @@ impl<'a> MidiMessage<'a> {
     pub fn to_owned(&self) -> MidiMessage<'static> {
         match self.clone() {
             MidiMessage::NoteOff(a, b, c) => MidiMessage::NoteOff(a, b, c),
-            MidiMessage::NoteOn(a, b, c) => MidiMessage::NoteOff(a, b, c),
+            MidiMessage::NoteOn(a, b, c) => MidiMessage::NoteOn(a, b, c),
             MidiMessage::PolyphonicKeyPressure(a, b, c) => {
                 MidiMessage::PolyphonicKeyPressure(a, b, c)
             }
