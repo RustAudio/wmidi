@@ -1,4 +1,4 @@
-use crate::{Error, Note};
+use crate::{Error, Note, U7};
 use std::convert::TryFrom;
 use std::io;
 use std::io::Write;
@@ -110,19 +110,11 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
             .ok_or(Error::NotEnoughBytes)
             .and_then(|b| valid_data_byte(*b));
         match bytes[0] & 0xF0 {
-            0x80 => Ok(MidiMessage::NoteOff(
-                chan,
-                unsafe { Note::from_u8_unchecked(data_a?) },
-                data_b?,
-            )),
-            0x90 => Ok(MidiMessage::NoteOn(
-                chan,
-                unsafe { Note::from_u8_unchecked(data_a?) },
-                data_b?,
-            )),
+            0x80 => Ok(MidiMessage::NoteOff(chan, Note::from(data_a?), data_b?)),
+            0x90 => Ok(MidiMessage::NoteOn(chan, Note::from(data_a?), data_b?)),
             0xA0 => Ok(MidiMessage::PolyphonicKeyPressure(
                 chan,
-                unsafe { Note::from_u8_unchecked(data_a?) },
+                Note::from(data_a?),
                 data_b?,
             )),
             0xB0 => Ok(MidiMessage::ControlChange(chan, data_a?, data_b?)),
@@ -274,39 +266,50 @@ impl<'a> MidiMessage<'a> {
         if bytes[end_i] != 0xF7 {
             return Err(Error::UnexpectedNonSysExEndByte(bytes[end_i]));
         }
-        Ok(MidiMessage::SysEx(&bytes[1..end_i]))
+        // We've already gone through the bytes to find the first non data byte so we are assured
+        // that values from 1..end_i are valid data bytes.
+        let data_bytes = unsafe { U7::from_bytes_unchecked(&bytes[1..end_i]) };
+        Ok(MidiMessage::SysEx(data_bytes))
     }
 }
 
 impl<'a> io::Read for MidiMessage<'a> {
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         match self {
-            MidiMessage::NoteOff(a, b, c) => buf.write(&[0x80 | a.index(), *b as u8, *c]),
-            MidiMessage::NoteOn(a, b, c) => buf.write(&[0x90 | a.index(), *b as u8, *c]),
-            MidiMessage::PolyphonicKeyPressure(a, b, c) => {
-                buf.write(&[0xA0 | a.index(), *b as u8, *c])
+            MidiMessage::NoteOff(a, b, c) => {
+                buf.write(&[0x80 | a.index(), u8::from(*b), u8::from(*c)])
             }
-            MidiMessage::ControlChange(a, b, c) => buf.write(&[0xB0 | a.index(), *b, *c]),
-            MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), *b]),
-            MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), *b]),
+            MidiMessage::NoteOn(a, b, c) => {
+                buf.write(&[0x90 | a.index(), u8::from(*b), u8::from(*c)])
+            }
+            MidiMessage::PolyphonicKeyPressure(a, b, c) => {
+                buf.write(&[0xA0 | a.index(), *b as u8, u8::from(*c)])
+            }
+            MidiMessage::ControlChange(a, b, c) => {
+                buf.write(&[0xB0 | a.index(), u8::from(*b), u8::from(*c)])
+            }
+            MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), u8::from(*b)]),
+            MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), u8::from(*b)]),
             MidiMessage::PitchBendChange(a, b) => {
                 let bytes_written = buf.write(&[0xE0 | a.index()])? + buf.write(&split_data(*b))?;
                 Ok(bytes_written)
             }
             MidiMessage::SysEx(b) => {
-                let bytes_written = buf.write(&[0xF0])? + buf.write(b)? + buf.write(&[0xF7])?;
+                let bytes_written =
+                    buf.write(&[0xF0])? + buf.write(U7::data_to_bytes(b))? + buf.write(&[0xF7])?;
                 Ok(bytes_written)
             }
             MidiMessage::OwnedSysEx(ref b) => {
-                let bytes_written = buf.write(&[0xF0])? + buf.write(&b)? + buf.write(&[0xF7])?;
+                let bytes_written =
+                    buf.write(&[0xF0])? + buf.write(U7::data_to_bytes(&b))? + buf.write(&[0xF7])?;
                 Ok(bytes_written)
             }
-            MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, *a]),
+            MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, u8::from(*a)]),
             MidiMessage::SongPositionPointer(a) => {
                 let bytes_written = buf.write(&[0xF2])? + buf.write(&split_data(*a))?;
                 Ok(bytes_written)
             }
-            MidiMessage::SongSelect(a) => buf.write(&[0xF3, *a]),
+            MidiMessage::SongSelect(a) => buf.write(&[0xF3, u8::from(*a)]),
             MidiMessage::Reserved(a) => buf.write(&[*a]),
             MidiMessage::TuneRequest => buf.write(&[0xF6]),
             MidiMessage::TimingClock => buf.write(&[0xF8]),
@@ -318,9 +321,6 @@ impl<'a> io::Read for MidiMessage<'a> {
         }
     }
 }
-
-/// A data byte that holds 7 bits of information.
-pub type U7 = u8;
 
 /// A combination of 2 data bytes that holds 14 bits of information.
 pub type U14 = u16;
@@ -424,12 +424,12 @@ impl Channel {
 
 #[inline(always)]
 fn combine_data(lower: U7, higher: U7) -> U14 {
-    u16::from(lower) + 128 * u16::from(higher)
+    u16::from(u8::from(lower)) + 128 * u16::from(u8::from(higher))
 }
 
 #[inline(always)]
-fn split_data(data: U14) -> [U7; 2] {
-    [(data % 128) as U7, (data / 128) as U7]
+fn split_data(data: U14) -> [u8; 2] {
+    [(data % 128) as u8, (data / 128) as u8]
 }
 
 #[inline(always)]
@@ -439,11 +439,7 @@ fn is_status_byte(b: u8) -> bool {
 
 #[inline(always)]
 fn valid_data_byte(b: u8) -> Result<U7, Error> {
-    if is_status_byte(b) {
-        Err(Error::UnexpectedStatusByte)
-    } else {
-        Ok(b as U7)
-    }
+    U7::try_from(b).map_err(|_| Error::UnexpectedStatusByte)
 }
 
 #[cfg(test)]
@@ -464,7 +460,11 @@ mod test {
         );
         assert_eq!(
             MidiMessage::try_from([0x84, 64, 100].as_ref()),
-            Ok(MidiMessage::NoteOff(Channel::Ch5, Note::E3, 100))
+            Ok(MidiMessage::NoteOff(
+                Channel::Ch5,
+                Note::E3,
+                U7::try_from(100).unwrap()
+            ))
         );
 
         assert_eq!(
@@ -477,16 +477,24 @@ mod test {
         );
         assert_eq!(
             MidiMessage::try_from([0x94, 64, 100].as_ref()),
-            Ok(MidiMessage::NoteOn(Channel::Ch5, Note::E3, 100))
+            Ok(MidiMessage::NoteOn(
+                Channel::Ch5,
+                Note::E3,
+                U7::try_from(100).unwrap()
+            ))
         );
 
         assert_eq!(
             MidiMessage::try_from([0xF0, 4, 8, 12, 16, 0xF7].as_ref()),
-            Ok(MidiMessage::SysEx(&[4, 8, 12, 16]))
+            Ok(MidiMessage::SysEx(
+                U7::try_from_bytes(&[4, 8, 12, 16]).unwrap()
+            ))
         );
         assert_eq!(
             MidiMessage::try_from([0xF0, 3, 6, 9, 12, 15, 0xF7, 125].as_ref()),
-            Ok(MidiMessage::SysEx(&[3, 6, 9, 12, 15]))
+            Ok(MidiMessage::SysEx(
+                U7::try_from_bytes(&[3, 6, 9, 12, 15]).unwrap()
+            ))
         );
         assert_eq!(
             MidiMessage::try_from([0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9].as_ref()),
@@ -511,9 +519,13 @@ mod test {
     fn read() {
         let b = {
             let mut b = [0u8; 6];
-            let bytes_read = MidiMessage::PolyphonicKeyPressure(Channel::Ch10, Note::A5, 43)
-                .read(&mut b)
-                .unwrap();
+            let bytes_read = MidiMessage::PolyphonicKeyPressure(
+                Channel::Ch10,
+                Note::A5,
+                U7::try_from(43).unwrap(),
+            )
+            .read(&mut b)
+            .unwrap();
             assert_eq!(bytes_read, 3);
             b
         };
@@ -524,7 +536,7 @@ mod test {
     fn read_sysex() {
         let b = {
             let mut b = [0u8; 8];
-            let bytes_read = MidiMessage::SysEx(&[10, 20, 30, 40, 50])
+            let bytes_read = MidiMessage::SysEx(U7::try_from_bytes(&[10, 20, 30, 40, 50]).unwrap())
                 .read(&mut b)
                 .unwrap();
             assert_eq!(bytes_read, 7);
@@ -535,10 +547,22 @@ mod test {
 
     #[test]
     fn drop_unowned_sysex() {
-        assert_eq!(MidiMessage::SysEx(&[1, 2, 3]).drop_unowned_sysex(), None);
         assert_eq!(
-            MidiMessage::OwnedSysEx(vec![1, 2, 3]).drop_unowned_sysex(),
-            Some(MidiMessage::OwnedSysEx(vec![1, 2, 3]))
+            MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap()).drop_unowned_sysex(),
+            None
+        );
+        assert_eq!(
+            MidiMessage::OwnedSysEx(vec![
+                U7::try_from(1).unwrap(),
+                U7::try_from(2).unwrap(),
+                U7::try_from(3).unwrap()
+            ])
+            .drop_unowned_sysex(),
+            Some(MidiMessage::OwnedSysEx(vec![
+                U7::try_from(1).unwrap(),
+                U7::try_from(2).unwrap(),
+                U7::try_from(3).unwrap()
+            ]))
         );
         assert_eq!(
             MidiMessage::TuneRequest.drop_unowned_sysex(),
@@ -549,19 +573,28 @@ mod test {
     #[test]
     fn to_owned() {
         assert_eq!(
-            MidiMessage::SysEx(&[1, 2, 3]).to_owned(),
-            MidiMessage::OwnedSysEx(vec![1, 2, 3])
+            MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap()).to_owned(),
+            MidiMessage::OwnedSysEx(vec![
+                U7::try_from(1).unwrap(),
+                U7::try_from(2).unwrap(),
+                U7::try_from(3).unwrap()
+            ])
         );
         assert_ne!(
-            MidiMessage::SysEx(&[1, 2, 3]).to_owned(),
-            MidiMessage::SysEx(&[1, 2, 3])
+            MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap()).to_owned(),
+            MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap())
         );
     }
 
     #[test]
     fn channel() {
         assert_eq!(
-            MidiMessage::ControlChange(Channel::Ch8, 1, 55).channel(),
+            MidiMessage::ControlChange(
+                Channel::Ch8,
+                U7::try_from(7).unwrap(),
+                U7::try_from(55).unwrap()
+            )
+            .channel(),
             Some(Channel::Ch8)
         );
         assert_eq!(MidiMessage::Start.channel(), None);

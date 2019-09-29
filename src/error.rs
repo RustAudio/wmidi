@@ -28,6 +28,9 @@ pub enum Error {
 
     /// Midi notes must be in the range [0, 127] inclusive.
     NoteOutOfRange,
+
+    /// Data (U7) bytes must be between [0, 127] inclusive.
+    DataByteOutOfRange,
 }
 
 impl error::Error for Error {}

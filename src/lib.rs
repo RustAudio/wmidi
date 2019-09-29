@@ -1,11 +1,13 @@
+mod byte;
 mod error;
 mod midi_message;
 mod note;
 
+pub use byte::U7;
 pub use error::Error;
 pub use midi_message::{
     Channel, ControlNumber, ControlValue, MidiMessage, PitchBend, ProgramNumber, Song,
-    SongPosition, Velocity, U14, U7,
+    SongPosition, Velocity, U14,
 };
 pub use note::Note;
 

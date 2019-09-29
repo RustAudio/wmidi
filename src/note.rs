@@ -218,6 +218,7 @@ impl Note {
     /// let parsed_note = 60;
     /// let note = unsafe { wmidi::Note::from_u8_unchecked(parsed_note) };
     ///```
+    #[inline(always)]
     pub unsafe fn from_u8_unchecked(note: u8) -> Note {
         std::mem::transmute(note)
     }
@@ -264,13 +265,13 @@ impl Note {
         let half_steps: i16 = half_steps.into();
         let raw_note = self as i16 + half_steps;
         if Note::LOWEST_NOTE as i16 <= raw_note && raw_note <= Note::HIGHEST_NOTE as i16 {
-            Ok(unsafe{Note::from_u8_unchecked(raw_note as u8)})
+            Ok(unsafe { Note::from_u8_unchecked(raw_note as u8) })
         } else {
             Err(Error::NoteOutOfRange)
         }
     }
 
-    pub fn to_str(&self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             Note::CMinus2 => "C-2",
             Note::DbMinus2 => "C#/Db-2",
@@ -282,7 +283,7 @@ impl Note {
             Note::GMinus2 => "G-2",
             Note::AbMinus2 => "G#/Ab-2",
             Note::AMinus2 => "A-2",
-            Note::BbMinus2 => "Bb/A#-2",
+            Note::BbMinus2 => "A#/Bb-2",
             Note::BMinus2 => "B-2",
             Note::CMinus1 => "C-1",
             Note::DbMinus1 => "C#/Db-1",
@@ -294,7 +295,7 @@ impl Note {
             Note::GMinus1 => "G-1",
             Note::AbMinus1 => "G#/Ab-1",
             Note::AMinus1 => "A-1",
-            Note::BbMinus1 => "Bb/A#-1",
+            Note::BbMinus1 => "A#/Bb-1",
             Note::BMinus1 => "B-1",
             Note::C0 => "C0",
             Note::Db0 => "C#/Db0",
@@ -306,7 +307,7 @@ impl Note {
             Note::G0 => "G0",
             Note::Ab0 => "G#/Ab0",
             Note::A0 => "A0",
-            Note::Bb0 => "Bb/A#0",
+            Note::Bb0 => "A#/Bb0",
             Note::B0 => "B0",
             Note::C1 => "C1",
             Note::Db1 => "C#/Db1",
@@ -318,7 +319,7 @@ impl Note {
             Note::G1 => "G1",
             Note::Ab1 => "G#/Ab1",
             Note::A1 => "A1",
-            Note::Bb1 => "Bb/A#1",
+            Note::Bb1 => "A#/Bb1",
             Note::B1 => "B1",
             Note::C2 => "C2",
             Note::Db2 => "C#/Db2",
@@ -330,7 +331,7 @@ impl Note {
             Note::G2 => "G2",
             Note::Ab2 => "G#/Ab2",
             Note::A2 => "A2",
-            Note::Bb2 => "Bb/A#2",
+            Note::Bb2 => "A#/Bb2",
             Note::B2 => "B2",
             Note::C3 => "C3",
             Note::Db3 => "C#/Db3",
@@ -342,7 +343,7 @@ impl Note {
             Note::G3 => "G3",
             Note::Ab3 => "G#/Ab3",
             Note::A3 => "A3",
-            Note::Bb3 => "Bb/A#3",
+            Note::Bb3 => "A#/Bb3",
             Note::B3 => "B3",
             Note::C4 => "C4",
             Note::Db4 => "C#/Db4",
@@ -354,7 +355,7 @@ impl Note {
             Note::G4 => "G4",
             Note::Ab4 => "G#/Ab4",
             Note::A4 => "A4",
-            Note::Bb4 => "Bb/A#4",
+            Note::Bb4 => "A#/Bb4",
             Note::B4 => "B4",
             Note::C5 => "C5",
             Note::Db5 => "C#/Db5",
@@ -366,7 +367,7 @@ impl Note {
             Note::G5 => "G5",
             Note::Ab5 => "G#/Ab5",
             Note::A5 => "A5",
-            Note::Bb5 => "Bb/A#5",
+            Note::Bb5 => "A#/Bb5",
             Note::B5 => "B5",
             Note::C6 => "C6",
             Note::Db6 => "C#/Db6",
@@ -378,7 +379,7 @@ impl Note {
             Note::G6 => "G6",
             Note::Ab6 => "G#/Ab6",
             Note::A6 => "A6",
-            Note::Bb6 => "Bb/A#6",
+            Note::Bb6 => "A#/Bb6",
             Note::B6 => "B6",
             Note::C7 => "C7",
             Note::Db7 => "C#/Db7",
@@ -390,7 +391,7 @@ impl Note {
             Note::G7 => "G7",
             Note::Ab7 => "G#/Ab7",
             Note::A7 => "A7",
-            Note::Bb7 => "Bb/A#7",
+            Note::Bb7 => "A#/Bb7",
             Note::B7 => "B7",
             Note::C8 => "C8",
             Note::Db8 => "C#/Db8",
@@ -419,12 +420,20 @@ impl TryFrom<u8> for Note {
     ///     Ok(note)
     /// }
     ///```
+    #[inline(always)]
     fn try_from(note: u8) -> Result<Note, Error> {
         if note > 127 {
             Err(Error::NoteOutOfRange)
         } else {
             Ok(unsafe { Note::from_u8_unchecked(note) })
         }
+    }
+}
+
+impl From<crate::U7> for Note {
+    #[inline(always)]
+    fn from(note: crate::U7) -> Note {
+        unsafe { Note::from_u8_unchecked(u8::from(note)) }
     }
 }
 
@@ -437,6 +446,7 @@ impl From<Note> for u8 {
     ///     u8::from(note)
     /// }
     ///```
+    #[inline(always)]
     fn from(note: Note) -> u8 {
         note as u8
     }
