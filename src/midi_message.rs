@@ -1,4 +1,4 @@
-use crate::{Error, Note, U7};
+use crate::{Error, Note, U14, U7};
 use std::convert::TryFrom;
 use std::io;
 use std::io::Write;
@@ -322,9 +322,6 @@ impl<'a> io::Read for MidiMessage<'a> {
     }
 }
 
-/// A combination of 2 data bytes that holds 14 bits of information.
-pub type U14 = u16;
-
 /// Specifies the velocity of an action (often key press, release, or aftertouch).
 pub type Velocity = U7;
 
@@ -424,12 +421,13 @@ impl Channel {
 
 #[inline(always)]
 fn combine_data(lower: U7, higher: U7) -> U14 {
-    u16::from(u8::from(lower)) + 128 * u16::from(u8::from(higher))
+    let raw = u16::from(u8::from(lower)) + 128 * u16::from(u8::from(higher));
+    unsafe { U14::from_unchecked(raw) }
 }
 
 #[inline(always)]
 fn split_data(data: U14) -> [u8; 2] {
-    [(data % 128) as u8, (data / 128) as u8]
+    [(u16::from(data) % 128) as u8, (u16::from(data) / 128) as u8]
 }
 
 #[inline(always)]
@@ -511,7 +509,10 @@ mod test {
         );
         assert_eq!(
             MidiMessage::try_from([0xE4, 64, 100].as_ref()),
-            Ok(MidiMessage::PitchBendChange(Channel::Ch5, 12864))
+            Ok(MidiMessage::PitchBendChange(
+                Channel::Ch5,
+                U14::try_from(12864).unwrap()
+            ))
         );
     }
 

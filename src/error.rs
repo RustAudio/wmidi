@@ -31,6 +31,9 @@ pub enum Error {
 
     /// Data (U7) bytes must be between [0, 127] inclusive.
     DataByteOutOfRange,
+
+    /// Data (U14) bytes must be between [0x0000, 0x03FF] or [0, 16383] inclusive.
+    U14OutOfRange,
 }
 
 impl error::Error for Error {}

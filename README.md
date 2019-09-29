@@ -9,5 +9,5 @@ Midi encoding and decoding library suitable for real-time execution.
 
 ## 3.0-unreleased
 
+* Instances of U7 and U14 now have bounds checking.
 * Note is now an enum instead of a u8. Can be converted with `Note::try_from` and `u8::from`.
-* Instances of data byte (`byte with only 7 bits`) now use the `U7` struct.
