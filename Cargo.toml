@@ -1,8 +1,8 @@
 [package]
 name = "wmidi"
-version = "3.0.1"
+version = "3.1.0"
 authors = ["wmedrano <will.s.medrano@gmail.com>"]
-description = "Midi parsing library with no heap allocations."
+description = "Midi parsing library with no heap allocations required."
 repository = "https://github.com/wmedrano/wmidi"
 license = "MIT"
 
