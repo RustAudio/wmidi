@@ -2,9 +2,11 @@
 
 Midi encoding and decoding library suitable for real-time execution.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![crates.io](https://img.shields.io/crates/v/wmidi.svg)](https://crates.io/crates/wmidi)
 [![docs.rs](https://docs.rs/wmidi/badge.svg)](https://docs.rs/wmidi)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![travis-ci](https://api.travis-ci.org/wmedrano/wmidi.svg?branch=master)](https://travis-ci.org/wmedrano/wmidi)
 
 # Usage
 

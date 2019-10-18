@@ -284,7 +284,7 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ControlChange(..) => 3,
             MidiMessage::ProgramChange(..) => 2,
             MidiMessage::ChannelPressure(..) => 2,
-            MidiMessage::PitchBendChange(..) => 2,
+            MidiMessage::PitchBendChange(..) => 3,
             MidiMessage::SysEx(b) => 2 + b.len(),
             MidiMessage::OwnedSysEx(b) => 2 + b.len(),
             MidiMessage::MidiTimeCode(_) => 2,
