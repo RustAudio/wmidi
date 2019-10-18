@@ -1,7 +1,6 @@
-use crate::{Error, Note, U14, U7};
+use crate::{Error, Note, ToSliceError, U14, U7};
 use std::convert::TryFrom;
 use std::io;
-use std::io::Write;
 
 /// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -156,6 +155,67 @@ impl<'a> MidiMessage<'a> {
         MidiMessage::try_from(bytes)
     }
 
+    /// Copies the message as bytes to slice. If slice does not have enough capacity to fit the
+    /// message, then an error is returned. On success, the number of bytes written will be
+    /// returned. This should be the same number obtained from `self.bytes_size()`.
+    #[allow(clippy::range_plus_one)]
+    pub fn copy_to_slice(&self, slice: &mut [u8]) -> Result<usize, ToSliceError> {
+        if slice.len() < self.bytes_size() {
+            Err(ToSliceError::BufferTooSmall)
+        } else {
+            let slice = &mut slice[..self.bytes_size()];
+            match self {
+                MidiMessage::NoteOff(a, b, c) => {
+                    slice.copy_from_slice(&[0x80 | a.index(), u8::from(*b), u8::from(*c)]);
+                }
+                MidiMessage::NoteOn(a, b, c) => {
+                    slice.copy_from_slice(&[0x90 | a.index(), u8::from(*b), u8::from(*c)]);
+                }
+                MidiMessage::PolyphonicKeyPressure(a, b, c) => {
+                    slice.copy_from_slice(&[0xA0 | a.index(), *b as u8, u8::from(*c)]);
+                }
+                MidiMessage::ControlChange(a, b, c) => {
+                    slice.copy_from_slice(&[0xB0 | a.index(), u8::from(*b), u8::from(*c)]);
+                }
+                MidiMessage::ProgramChange(a, b) => {
+                    slice.copy_from_slice(&[0xC0 | a.index(), u8::from(*b)]);
+                }
+                MidiMessage::ChannelPressure(a, b) => {
+                    slice.copy_from_slice(&[0xD0 | a.index(), u8::from(*b)]);
+                }
+                MidiMessage::PitchBendChange(a, b) => {
+                    let (b1, b2) = split_data(*b);
+                    slice.copy_from_slice(&[0xE0 | a.index(), b1, b2]);
+                }
+                MidiMessage::SysEx(b) => {
+                    slice[0] = 0xF0;
+                    slice[1..1 + b.len()].copy_from_slice(U7::data_to_bytes(b));
+                    slice[1 + b.len()] = 0xF7;
+                }
+                MidiMessage::OwnedSysEx(ref b) => {
+                    slice[0] = 0xF0;
+                    slice[1..1 + b.len()].copy_from_slice(U7::data_to_bytes(b));
+                    slice[1 + b.len()] = 0xF7;
+                }
+                MidiMessage::MidiTimeCode(a) => slice.copy_from_slice(&[0xF1, u8::from(*a)]),
+                MidiMessage::SongPositionPointer(a) => {
+                    let (a1, a2) = split_data(*a);
+                    slice.copy_from_slice(&[0xF2, a1, a2]);
+                }
+                MidiMessage::SongSelect(a) => slice.copy_from_slice(&[0xF3, u8::from(*a)]),
+                MidiMessage::Reserved(a) => slice.copy_from_slice(&[*a]),
+                MidiMessage::TuneRequest => slice.copy_from_slice(&[0xF6]),
+                MidiMessage::TimingClock => slice.copy_from_slice(&[0xF8]),
+                MidiMessage::Start => slice.copy_from_slice(&[0xFA]),
+                MidiMessage::Continue => slice.copy_from_slice(&[0xFB]),
+                MidiMessage::Stop => slice.copy_from_slice(&[0xFC]),
+                MidiMessage::ActiveSensing => slice.copy_from_slice(&[0xFE]),
+                MidiMessage::Reset => slice.copy_from_slice(&[0xFF]),
+            };
+            Ok(self.bytes_size())
+        }
+    }
+
     /// Return `Some(midi_message)` if `self` is not a SysEx message, or `None` if it is. This expands the lifetime of
     /// the `MidiMessage` from `'a` to `'static`.
     pub fn drop_unowned_sysex(self) -> Option<MidiMessage<'static>> {
@@ -215,8 +275,8 @@ impl<'a> MidiMessage<'a> {
         }
     }
 
-    /// The number of bytes the MIDI message takes when encoded with the `std::io::Read` trait.
-    pub fn wire_size(&self) -> usize {
+    /// The number of bytes the MIDI message takes when converted to bytes.
+    pub fn bytes_size(&self) -> usize {
         match self {
             MidiMessage::NoteOff(..) => 3,
             MidiMessage::NoteOn(..) => 3,
@@ -239,6 +299,15 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ActiveSensing => 1,
             MidiMessage::Reset => 1,
         }
+    }
+
+    /// The number of bytes the MIDI message takes when encoded with the `std::io::Read` trait.
+    #[deprecated(
+        since = "3.1.0",
+        note = "Function has been renamed to MidiMessage::bytes_size()."
+    )]
+    pub fn wire_size(&self) -> usize {
+        self.bytes_size()
     }
 
     /// The channel associated with the MIDI message, if applicable for the message type.
@@ -273,51 +342,12 @@ impl<'a> MidiMessage<'a> {
     }
 }
 
+#[deprecated(since = "3.1.0", note = "Use MidiMessage::copy_from_slice instead.")]
 impl<'a> io::Read for MidiMessage<'a> {
-    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
-        match self {
-            MidiMessage::NoteOff(a, b, c) => {
-                buf.write(&[0x80 | a.index(), u8::from(*b), u8::from(*c)])
-            }
-            MidiMessage::NoteOn(a, b, c) => {
-                buf.write(&[0x90 | a.index(), u8::from(*b), u8::from(*c)])
-            }
-            MidiMessage::PolyphonicKeyPressure(a, b, c) => {
-                buf.write(&[0xA0 | a.index(), *b as u8, u8::from(*c)])
-            }
-            MidiMessage::ControlChange(a, b, c) => {
-                buf.write(&[0xB0 | a.index(), u8::from(*b), u8::from(*c)])
-            }
-            MidiMessage::ProgramChange(a, b) => buf.write(&[0xC0 | a.index(), u8::from(*b)]),
-            MidiMessage::ChannelPressure(a, b) => buf.write(&[0xD0 | a.index(), u8::from(*b)]),
-            MidiMessage::PitchBendChange(a, b) => {
-                let bytes_written = buf.write(&[0xE0 | a.index()])? + buf.write(&split_data(*b))?;
-                Ok(bytes_written)
-            }
-            MidiMessage::SysEx(b) => {
-                let bytes_written =
-                    buf.write(&[0xF0])? + buf.write(U7::data_to_bytes(b))? + buf.write(&[0xF7])?;
-                Ok(bytes_written)
-            }
-            MidiMessage::OwnedSysEx(ref b) => {
-                let bytes_written =
-                    buf.write(&[0xF0])? + buf.write(U7::data_to_bytes(&b))? + buf.write(&[0xF7])?;
-                Ok(bytes_written)
-            }
-            MidiMessage::MidiTimeCode(a) => buf.write(&[0xF1, u8::from(*a)]),
-            MidiMessage::SongPositionPointer(a) => {
-                let bytes_written = buf.write(&[0xF2])? + buf.write(&split_data(*a))?;
-                Ok(bytes_written)
-            }
-            MidiMessage::SongSelect(a) => buf.write(&[0xF3, u8::from(*a)]),
-            MidiMessage::Reserved(a) => buf.write(&[*a]),
-            MidiMessage::TuneRequest => buf.write(&[0xF6]),
-            MidiMessage::TimingClock => buf.write(&[0xF8]),
-            MidiMessage::Start => buf.write(&[0xFA]),
-            MidiMessage::Continue => buf.write(&[0xFB]),
-            MidiMessage::Stop => buf.write(&[0xFC]),
-            MidiMessage::ActiveSensing => buf.write(&[0xFE]),
-            MidiMessage::Reset => buf.write(&[0xFF]),
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        match self.copy_to_slice(buf) {
+            Ok(n) => Ok(n),
+            Err(ToSliceError::BufferTooSmall) => Ok(0),
         }
     }
 }
@@ -426,8 +456,8 @@ fn combine_data(lower: U7, higher: U7) -> U14 {
 }
 
 #[inline(always)]
-fn split_data(data: U14) -> [u8; 2] {
-    [(u16::from(data) % 128) as u8, (u16::from(data) / 128) as u8]
+fn split_data(data: U14) -> (u8, u8) {
+    ((u16::from(data) % 128) as u8, (u16::from(data) / 128) as u8)
 }
 
 #[inline(always)]
@@ -444,7 +474,6 @@ fn valid_data_byte(b: u8) -> Result<U7, Error> {
 mod test {
     use super::*;
     use crate::{Error, Note};
-    use std::io::Read;
 
     #[test]
     fn try_from() {
@@ -517,30 +546,31 @@ mod test {
     }
 
     #[test]
-    fn read() {
+    fn copy_to_slice() {
         let b = {
             let mut b = [0u8; 6];
-            let bytes_read = MidiMessage::PolyphonicKeyPressure(
+            let bytes_copied = MidiMessage::PolyphonicKeyPressure(
                 Channel::Ch10,
                 Note::A5,
                 U7::try_from(43).unwrap(),
             )
-            .read(&mut b)
+            .copy_to_slice(&mut b)
             .unwrap();
-            assert_eq!(bytes_read, 3);
+            assert_eq!(bytes_copied, 3);
             b
         };
         assert_eq!(b, [0xA9, 93, 43, 0, 0, 0]);
     }
 
     #[test]
-    fn read_sysex() {
+    fn copy_to_slice_sysex() {
         let b = {
             let mut b = [0u8; 8];
-            let bytes_read = MidiMessage::SysEx(U7::try_from_bytes(&[10, 20, 30, 40, 50]).unwrap())
-                .read(&mut b)
-                .unwrap();
-            assert_eq!(bytes_read, 7);
+            let bytes_copied =
+                MidiMessage::SysEx(U7::try_from_bytes(&[10, 20, 30, 40, 50]).unwrap())
+                    .copy_to_slice(&mut b)
+                    .unwrap();
+            assert_eq!(bytes_copied, 7);
             b
         };
         assert_eq!(b, [0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);

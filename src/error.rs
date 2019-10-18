@@ -1,9 +1,9 @@
 use std::error;
 use std::fmt;
 
-/// Midi encoding and decoding errors.
+/// Midi decoding errors.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Error {
+pub enum FromBytesError {
     /// The MIDI channel is not between 1 and 16 inclusive.
     ChannelOutOfRange,
 
@@ -36,10 +36,27 @@ pub enum Error {
     U14OutOfRange,
 }
 
-impl error::Error for Error {}
+impl error::Error for FromBytesError {}
 
-impl fmt::Display for Error {
+impl fmt::Display for FromBytesError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self, f)
+    }
+}
+
+/// An error that can occurr converting a midi message to a bytes slice.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ToSliceError {
+    /// The destination buffer cannot fit all the bytes.
+    BufferTooSmall,
+}
+
+impl error::Error for ToSliceError {}
+
+impl fmt::Display for ToSliceError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ToSliceError::BufferTooSmall => write!(f, "buffer size too small"),
+        }
     }
 }

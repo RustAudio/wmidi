@@ -6,7 +6,34 @@ Midi encoding and decoding library suitable for real-time execution.
 [![crates.io](https://img.shields.io/crates/v/wmidi.svg)](https://crates.io/crates/wmidi)
 [![docs.rs](https://docs.rs/wmidi/badge.svg)](https://docs.rs/wmidi)
 
+# Usage
+
+```rust
+use std::convert::TryFrom;
+
+// Decoding messages from bytes.
+fn handle_midi_message(bytes: &[u8]) -> Result<(), wmidi::FromBytesError> {
+    let message = wmidi::MidiMessage::try_from(bytes)?;
+    if let wmidi::MidiMessage::NoteOn(_, note, _) = message {
+        println!("Singing {}", note);
+    }
+    Ok(())
+}
+
+// Encoding messages to bytes.
+fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
+    let mut bytes = vec![0u8; message.bytes_size()];
+    message.copy_to_slice(bytes.as_mut_slice()).unwrap();
+    bytes
+}
+```
+
 # Changelog
+
+## 3.1-unreleased
+
+* Rename `MidiMessage::wire_size()` to `MidiMessage::bytes_size()`.
+* Introduce `MidiMessage::copy_to_slice()` method.
 
 ## 3.0
 

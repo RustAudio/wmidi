@@ -4,12 +4,15 @@ mod midi_message;
 mod note;
 
 pub use byte::{U14, U7};
-pub use error::Error;
+pub use error::{FromBytesError, ToSliceError};
 pub use midi_message::{
     Channel, ControlNumber, ControlValue, MidiMessage, PitchBend, ProgramNumber, Song,
     SongPosition, Velocity,
 };
 pub use note::Note;
+
+/// Use `FromBytesError` instead.
+pub type Error = FromBytesError;
 
 /// The frequency for `note` using the standard 440Hz tuning.
 #[inline(always)]
