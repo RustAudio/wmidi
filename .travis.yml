@@ -1,0 +1,17 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+jobs:
+  allow_failures:
+    - rust: nightly
+cache: cargo
+before_cache:
+  - rm -rf "${TRAVIS_HOME}/.cargo/registry/src"
+before_script:
+  - rustup component add clippy
+script:
+  - cargo build --verbose
+  - cargo test --verbose all
+  - cargo clippy --all-targets -- -D warnings
