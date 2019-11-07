@@ -16,6 +16,11 @@ bench = false
 [dev-dependencies]
 criterion = "0.3"
 
+[features]
+# Meta-features:
+default = ["std"] # without "std" wmidi uses libcore
+std = []
+
 [[bench]]
 name = "bench"
 harness = false

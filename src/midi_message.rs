@@ -1,6 +1,8 @@
 use crate::{Error, Note, ToSliceError, U14, U7};
-use std::convert::TryFrom;
-use std::io;
+use core::convert::TryFrom;
+
+#[cfg(feature = "std")]
+use std::{io, vec::Vec};
 
 /// Holds information based on the Midi 1.0 spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -47,6 +49,7 @@ pub enum MidiMessage<'a> {
     /// 3 bytes. Two of the 1 Byte IDs are reserved for extensions called Universal Exclusive Messages, which are not
     /// manufacturer-specific. If a device recognizes the ID code as its own (or as a supported Universal message) it
     /// will listen to the rest of the message. Otherwise the message will be ignored.
+    #[cfg(feature = "std")]
     OwnedSysEx(Vec<U7>),
 
     /// MIDI Time Code Quarter Frame.
@@ -192,6 +195,7 @@ impl<'a> MidiMessage<'a> {
                     slice[1..1 + b.len()].copy_from_slice(U7::data_to_bytes(b));
                     slice[1 + b.len()] = 0xF7;
                 }
+                #[cfg(feature = "std")]
                 MidiMessage::OwnedSysEx(ref b) => {
                     slice[0] = 0xF0;
                     slice[1..1 + b.len()].copy_from_slice(U7::data_to_bytes(b));
@@ -230,6 +234,7 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ChannelPressure(a, b) => Some(MidiMessage::ChannelPressure(a, b)),
             MidiMessage::PitchBendChange(a, b) => Some(MidiMessage::PitchBendChange(a, b)),
             MidiMessage::SysEx(_) => None,
+            #[cfg(feature = "std")]
             MidiMessage::OwnedSysEx(bytes) => Some(MidiMessage::OwnedSysEx(bytes)),
             MidiMessage::MidiTimeCode(a) => Some(MidiMessage::MidiTimeCode(a)),
             MidiMessage::SongPositionPointer(a) => Some(MidiMessage::SongPositionPointer(a)),
@@ -259,7 +264,11 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ProgramChange(a, b) => MidiMessage::ProgramChange(a, b),
             MidiMessage::ChannelPressure(a, b) => MidiMessage::ChannelPressure(a, b),
             MidiMessage::PitchBendChange(a, b) => MidiMessage::PitchBendChange(a, b),
+            #[cfg(feature = "std")]
             MidiMessage::SysEx(bytes) => MidiMessage::OwnedSysEx(bytes.to_vec()),
+            #[cfg(not(feature = "std"))]
+            MidiMessage::SysEx(_) => MidiMessage::SysEx(&[]), //to be updated with a better solution.
+            #[cfg(feature = "std")]
             MidiMessage::OwnedSysEx(bytes) => MidiMessage::OwnedSysEx(bytes),
             MidiMessage::MidiTimeCode(a) => MidiMessage::MidiTimeCode(a),
             MidiMessage::SongPositionPointer(a) => MidiMessage::SongPositionPointer(a),
@@ -286,6 +295,7 @@ impl<'a> MidiMessage<'a> {
             MidiMessage::ChannelPressure(..) => 2,
             MidiMessage::PitchBendChange(..) => 3,
             MidiMessage::SysEx(b) => 2 + b.len(),
+            #[cfg(feature = "std")]
             MidiMessage::OwnedSysEx(b) => 2 + b.len(),
             MidiMessage::MidiTimeCode(_) => 2,
             MidiMessage::SongPositionPointer(_) => 3,
@@ -342,6 +352,7 @@ impl<'a> MidiMessage<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[deprecated(since = "3.1.0", note = "Use MidiMessage::copy_from_slice instead.")]
 impl<'a> io::Read for MidiMessage<'a> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {

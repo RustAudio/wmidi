@@ -1,3 +1,8 @@
+#![no_std]
+#![cfg(feature = "std")]
+#[macro_use]
+extern crate std;
+
 mod byte;
 mod error;
 mod midi_message;
@@ -15,6 +20,7 @@ pub use note::Note;
 pub type Error = FromBytesError;
 
 /// The frequency for `note` using the standard 440Hz tuning.
+#[cfg(feature = "std")]
 #[inline(always)]
 #[deprecated(since = "3.0.0", note = "Use note.to_freq_f32() instead.")]
 pub fn note_to_frequency_f32(note: Note) -> f32 {
@@ -22,6 +28,7 @@ pub fn note_to_frequency_f32(note: Note) -> f32 {
 }
 
 /// The frequency for `note` using the standard 440Hz tuning.
+#[cfg(feature = "std")]
 #[inline(always)]
 #[deprecated(since = "3.0.0", note = "Use note.to_freq_f64() instead.")]
 pub fn note_to_frequency_f64(note: Note) -> f64 {

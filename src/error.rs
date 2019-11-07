@@ -1,5 +1,6 @@
+use core::fmt;
+#[cfg(feature = "std")]
 use std::error;
-use std::fmt;
 
 /// Midi decoding errors.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -36,6 +37,7 @@ pub enum FromBytesError {
     U14OutOfRange,
 }
 
+#[cfg(feature = "std")]
 impl error::Error for FromBytesError {}
 
 impl fmt::Display for FromBytesError {
@@ -51,6 +53,7 @@ pub enum ToSliceError {
     BufferTooSmall,
 }
 
+#[cfg(feature = "std")]
 impl error::Error for ToSliceError {}
 
 impl fmt::Display for ToSliceError {

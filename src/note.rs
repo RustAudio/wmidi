@@ -1,6 +1,6 @@
 use crate::Error;
-use std::convert::TryFrom;
-use std::fmt;
+use core::convert::TryFrom;
+use core::fmt;
 
 /// A midi note.
 ///
@@ -220,7 +220,7 @@ impl Note {
     ///```
     #[inline(always)]
     pub unsafe fn from_u8_unchecked(note: u8) -> Note {
-        std::mem::transmute(note)
+        core::mem::transmute(note)
     }
 
     /// The frequency using the standard 440Hz tuning.
@@ -231,6 +231,7 @@ impl Note {
     /// let note = wmidi::Note::A3;
     /// sing(note.to_freq_f32());
     /// ```
+    #[cfg(feature = "std")]
     #[inline(always)]
     pub fn to_freq_f32(self) -> f32 {
         let exp = (f32::from(self as u8) + 36.376_316) / 12.0;
@@ -245,6 +246,7 @@ impl Note {
     /// let note = wmidi::Note::A3;
     /// sing(note.to_freq_f64());
     /// ```
+    #[cfg(feature = "std")]
     #[inline(always)]
     pub fn to_freq_f64(self) -> f64 {
         let exp = (f64::from(self as u8) + 36.376_316_562_295_91) / 12.0;
@@ -486,6 +488,7 @@ mod test {
         assert_eq!(Note::B3.step(-100), Err(Error::NoteOutOfRange));
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_debug() {
         let debug_str = format!("{:?}", Note::Bb3);

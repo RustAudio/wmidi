@@ -1,5 +1,5 @@
 use crate::Error;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 /// A data byte that holds 7 bits of information.
 #[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -60,7 +60,6 @@ impl TryFrom<u8> for U7 {
         }
     }
 }
-
 
 /// A combination of 2 data bytes that holds 14 bits of information.
 #[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
