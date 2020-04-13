@@ -12,6 +12,9 @@ impl U7 {
     pub const MAX: U7 = U7(0x80 - 0x01);
 
     /// Convert a `u8` into a `U7` without bounds checking.
+    ///
+    /// # Safety
+    /// Behavior is undefined if data > 127.
     #[inline(always)]
     pub unsafe fn from_unchecked(data: u8) -> U7 {
         U7(data)
@@ -35,6 +38,9 @@ impl U7 {
     }
 
     /// Convert a slice of `u8` to a slice of `U7` without bounds checking.
+    ///
+    /// # Safety
+    /// Behavior is undefined if any byte is > 127.
     #[inline(always)]
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &[U7] {
         &*(bytes as *const [u8] as *const [U7])
@@ -72,6 +78,9 @@ impl U14 {
     pub const MAX: U14 = U14(0x4000 - 0x0001);
 
     /// Convert a `u8` into a `U7` without bounds checking.
+    ///
+    /// # Safety
+    /// Behavior is undefined if data is > 16383.
     #[inline(always)]
     pub unsafe fn from_unchecked(data: u16) -> U14 {
         U14(data)
@@ -95,6 +104,9 @@ impl U14 {
     }
 
     /// Convert a slice of `u16` to a slice of `U14` without bounds checking.
+    ///
+    /// # Safety
+    /// Behavior is undefined if any byte is > 16383.
     #[inline(always)]
     pub unsafe fn from_slice_unchecked(slice: &[u16]) -> &[U14] {
         &*(slice as *const [u16] as *const [U14])
