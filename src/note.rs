@@ -218,6 +218,9 @@ impl Note {
     /// let parsed_note = 60;
     /// let note = unsafe { wmidi::Note::from_u8_unchecked(parsed_note) };
     ///```
+    ///
+    /// # Safety
+    /// `note` must be less than or equal to 127.
     #[inline(always)]
     pub unsafe fn from_u8_unchecked(note: u8) -> Note {
         core::mem::transmute(note)
