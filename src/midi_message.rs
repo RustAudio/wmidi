@@ -1,4 +1,4 @@
-use crate::{Error, Note, ToSliceError, U14, U7};
+use crate::{ControlFunction, Error, Note, ToSliceError, U14, U7};
 use core::convert::TryFrom;
 
 #[cfg(feature = "std")]
@@ -19,7 +19,7 @@ pub enum MidiMessage<'a> {
     /// This message is sent when a controller value changes. Controllers include devices such as pedals and levers.
     ///
     /// Controller numbers 120-127 are reserved as "Channel Mode Messages".
-    ControlChange(Channel, ControlNumber, ControlValue),
+    ControlChange(Channel, ControlFunction, ControlValue),
 
     /// This message is sent when the patch number changes.
     ProgramChange(Channel, ProgramNumber),
@@ -119,7 +119,7 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
                 Note::from(data_a?),
                 data_b?,
             )),
-            0xB0 => Ok(MidiMessage::ControlChange(chan, data_a?, data_b?)),
+            0xB0 => Ok(MidiMessage::ControlChange(chan, data_a?.into(), data_b?)),
             0xC0 => Ok(MidiMessage::ProgramChange(chan, data_a?)),
             0xD0 => Ok(MidiMessage::ChannelPressure(chan, data_a?)),
             0xE0 => Ok(MidiMessage::PitchBendChange(
@@ -366,9 +366,6 @@ impl<'a> io::Read for MidiMessage<'a> {
 /// Specifies the velocity of an action (often key press, release, or aftertouch).
 pub type Velocity = U7;
 
-/// Specifies a MIDI control number.
-pub type ControlNumber = U7;
-
 /// Specifies the value of a MIDI control.
 pub type ControlValue = U7;
 
@@ -484,7 +481,7 @@ fn valid_data_byte(b: u8) -> Result<U7, Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{Error, Note};
+    use crate::{ControlFunction, Error, Note};
 
     #[test]
     fn try_from() {
@@ -633,7 +630,7 @@ mod test {
         assert_eq!(
             MidiMessage::ControlChange(
                 Channel::Ch8,
-                U7::try_from(7).unwrap(),
+                ControlFunction::DamperPedal,
                 U7::try_from(55).unwrap()
             )
             .channel(),
