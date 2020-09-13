@@ -497,7 +497,7 @@ mod test {
             MidiMessage::try_from([0x84, 64, 100].as_ref()),
             Ok(MidiMessage::NoteOff(
                 Channel::Ch5,
-                Note::E3,
+                Note::E4,
                 U7::try_from(100).unwrap()
             ))
         );
@@ -514,7 +514,7 @@ mod test {
             MidiMessage::try_from([0x94, 64, 100].as_ref()),
             Ok(MidiMessage::NoteOn(
                 Channel::Ch5,
-                Note::E3,
+                Note::E4,
                 U7::try_from(100).unwrap()
             ))
         );
@@ -559,7 +559,7 @@ mod test {
             let mut b = [0u8; 6];
             let bytes_copied = MidiMessage::PolyphonicKeyPressure(
                 Channel::Ch10,
-                Note::A5,
+                Note::A6,
                 U7::try_from(43).unwrap(),
             )
             .copy_to_slice(&mut b)

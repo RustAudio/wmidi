@@ -16,147 +16,142 @@ use core::fmt;
 #[repr(u8)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Note {
-    CMinus2 = 0,
-    DbMinus2 = 1,
-    DMinus2 = 2,
-    EbMinus2 = 3,
-    EMinus2 = 4,
-    FMinus2 = 5,
-    GbMinus2 = 6,
-    GMinus2 = 7,
-    AbMinus2 = 8,
-    AMinus2 = 9,
-    BbMinus2 = 10,
-    BMinus2 = 11,
-    CMinus1 = 12,
-    DbMinus1 = 13,
-    DMinus1 = 14,
-    EbMinus1 = 15,
-    EMinus1 = 16,
-    FMinus1 = 17,
-    GbMinus1 = 18,
-    GMinus1 = 19,
-    AbMinus1 = 20,
-    AMinus1 = 21,
-    BbMinus1 = 22,
-    BMinus1 = 23,
-    C0 = 24,
-    Db0 = 25,
-    D0 = 26,
-    Eb0 = 27,
-    E0 = 28,
-    F0 = 29,
-    Gb0 = 30,
-    G0 = 31,
-    Ab0 = 32,
-    A0 = 33,
-    Bb0 = 34,
-    B0 = 35,
-    C1 = 36,
-    Db1 = 37,
-    D1 = 38,
-    Eb1 = 39,
-    E1 = 40,
-    F1 = 41,
-    Gb1 = 42,
-    G1 = 43,
-    Ab1 = 44,
-    A1 = 45,
-    Bb1 = 46,
-    B1 = 47,
-    C2 = 48,
-    Db2 = 49,
-    D2 = 50,
-    Eb2 = 51,
-    E2 = 52,
-    F2 = 53,
-    Gb2 = 54,
-    G2 = 55,
-    Ab2 = 56,
-    A2 = 57,
-    Bb2 = 58,
-    B2 = 59,
+    CMinus1 = 0,
+    DbMinus1 = 1,
+    DMinus1 = 2,
+    EbMinus1 = 3,
+    EMinus1 = 4,
+    FMinus1 = 5,
+    GbMinus1 = 6,
+    GMinus1 = 7,
+    AbMinus1 = 8,
+    AMinus1 = 9,
+    BbMinus1 = 10,
+    BMinus1 = 11,
+    C0 = 12,
+    Db0 = 13,
+    D0 = 14,
+    Eb0 = 15,
+    E0 = 16,
+    F0 = 17,
+    Gb0 = 18,
+    G0 = 19,
+    Ab0 = 20,
+    A0 = 21,
+    Bb0 = 22,
+    B0 = 23,
+    C1 = 24,
+    Db1 = 25,
+    D1 = 26,
+    Eb1 = 27,
+    E1 = 28,
+    F1 = 29,
+    Gb1 = 30,
+    G1 = 31,
+    Ab1 = 32,
+    A1 = 33,
+    Bb1 = 34,
+    B1 = 35,
+    C2 = 36,
+    Db2 = 37,
+    D2 = 38,
+    Eb2 = 39,
+    E2 = 40,
+    F2 = 41,
+    Gb2 = 42,
+    G2 = 43,
+    Ab2 = 44,
+    A2 = 45,
+    Bb2 = 46,
+    B2 = 47,
+    C3 = 48,
+    Db3 = 49,
+    D3 = 50,
+    Eb3 = 51,
+    E3 = 52,
+    F3 = 53,
+    Gb3 = 54,
+    G3 = 55,
+    Ab3 = 56,
+    A3 = 57,
+    Bb3 = 58,
+    B3 = 59,
     /// Middle C.
-    C3 = 60,
-    Db3 = 61,
-    D3 = 62,
-    Eb3 = 63,
-    E3 = 64,
-    F3 = 65,
-    Gb3 = 66,
-    G3 = 67,
-    Ab3 = 68,
+    C4 = 60,
+    Db4 = 61,
+    D4 = 62,
+    Eb4 = 63,
+    E4 = 64,
+    F4 = 65,
+    Gb4 = 66,
+    G4 = 67,
+    Ab4 = 68,
     /// A440.
-    A3 = 69,
-    Bb3 = 70,
-    B3 = 71,
-    C4 = 72,
-    Db4 = 73,
-    D4 = 74,
-    Eb4 = 75,
-    E4 = 76,
-    F4 = 77,
-    Gb4 = 78,
-    G4 = 79,
-    Ab4 = 80,
-    A4 = 81,
-    Bb4 = 82,
-    B4 = 83,
-    C5 = 84,
-    Db5 = 85,
-    D5 = 86,
-    Eb5 = 87,
-    E5 = 88,
-    F5 = 89,
-    Gb5 = 90,
-    G5 = 91,
-    Ab5 = 92,
-    A5 = 93,
-    Bb5 = 94,
-    B5 = 95,
-    C6 = 96,
-    Db6 = 97,
-    D6 = 98,
-    Eb6 = 99,
-    E6 = 100,
-    F6 = 101,
-    Gb6 = 102,
-    G6 = 103,
-    Ab6 = 104,
-    A6 = 105,
-    Bb6 = 106,
-    B6 = 107,
-    C7 = 108,
-    Db7 = 109,
-    D7 = 110,
-    Eb7 = 111,
-    E7 = 112,
-    F7 = 113,
-    Gb7 = 114,
-    G7 = 115,
-    Ab7 = 116,
-    A7 = 117,
-    Bb7 = 118,
-    B7 = 119,
-    C8 = 120,
-    Db8 = 121,
-    D8 = 122,
-    Eb8 = 123,
-    E8 = 124,
-    F8 = 125,
-    Gb8 = 126,
-    G8 = 127,
+    A4 = 69,
+    Bb4 = 70,
+    B4 = 71,
+    C5 = 72,
+    Db5 = 73,
+    D5 = 74,
+    Eb5 = 75,
+    E5 = 76,
+    F5 = 77,
+    Gb5 = 78,
+    G5 = 79,
+    Ab5 = 80,
+    A5 = 81,
+    Bb5 = 82,
+    B5 = 83,
+    C6 = 84,
+    Db6 = 85,
+    D6 = 86,
+    Eb6 = 87,
+    E6 = 88,
+    F6 = 89,
+    Gb6 = 90,
+    G6 = 91,
+    Ab6 = 92,
+    A6 = 93,
+    Bb6 = 94,
+    B6 = 95,
+    C7 = 96,
+    Db7 = 97,
+    D7 = 98,
+    Eb7 = 99,
+    E7 = 100,
+    F7 = 101,
+    Gb7 = 102,
+    G7 = 103,
+    Ab7 = 104,
+    A7 = 105,
+    Bb7 = 106,
+    B7 = 107,
+    C8 = 108,
+    Db8 = 109,
+    D8 = 110,
+    Eb8 = 111,
+    E8 = 112,
+    F8 = 113,
+    Gb8 = 114,
+    G8 = 115,
+    Ab8 = 116,
+    A8 = 117,
+    Bb8 = 118,
+    B8 = 119,
+    C9 = 120,
+    Db9 = 121,
+    D9 = 122,
+    Eb9 = 123,
+    E9 = 124,
+    F9 = 125,
+    Gb9 = 126,
+    G9 = 127,
 }
 
 #[allow(non_upper_case_globals)]
 impl Note {
-    pub const CSharpMinus2: Note = Note::DbMinus2;
-    pub const DSharpMinus2: Note = Note::EbMinus2;
-    pub const FSharpMinus2: Note = Note::GbMinus2;
-    pub const GSharpMinus2: Note = Note::AbMinus2;
-    pub const ASharpMinus2: Note = Note::BbMinus2;
     pub const CSharpMinus1: Note = Note::DbMinus1;
-    pub const DSharMinus1: Note = Note::EbMinus1;
+    pub const DSharpMinus1: Note = Note::EbMinus1;
     pub const FSharpMinus1: Note = Note::GbMinus1;
     pub const GSharpMinus1: Note = Note::AbMinus1;
     pub const ASharpMinus1: Note = Note::BbMinus1;
@@ -203,12 +198,17 @@ impl Note {
     pub const CSharp8: Note = Note::Db8;
     pub const DSharp8: Note = Note::Eb8;
     pub const FSharp8: Note = Note::Gb8;
+    pub const GSharp8: Note = Note::Ab8;
+    pub const ASharp8: Note = Note::Bb8;
+    pub const CSharp9: Note = Note::Db9;
+    pub const DSharp9: Note = Note::Eb9;
+    pub const FSharp9: Note = Note::Gb9;
 
     /// The lowest representable note.
-    pub const LOWEST_NOTE: Note = Note::CMinus2;
+    pub const LOWEST_NOTE: Note = Note::CMinus1;
 
     /// The highest representable note.
-    pub const HIGHEST_NOTE: Note = Note::G8;
+    pub const HIGHEST_NOTE: Note = Note::G9;
 
     /// Creates a note from a `u8`. `note` must be between [0, 127] inclusive to create a valid
     /// note.
@@ -278,18 +278,6 @@ impl Note {
 
     pub fn to_str(self) -> &'static str {
         match self {
-            Note::CMinus2 => "C-2",
-            Note::DbMinus2 => "C#/Db-2",
-            Note::DMinus2 => "D-2",
-            Note::EbMinus2 => "D#/Eb-2",
-            Note::EMinus2 => "E-2",
-            Note::FMinus2 => "F-2",
-            Note::GbMinus2 => "F#/Gb-2",
-            Note::GMinus2 => "G-2",
-            Note::AbMinus2 => "G#/Ab-2",
-            Note::AMinus2 => "A-2",
-            Note::BbMinus2 => "A#/Bb-2",
-            Note::BMinus2 => "B-2",
             Note::CMinus1 => "C-1",
             Note::DbMinus1 => "C#/Db-1",
             Note::DMinus1 => "D-1",
@@ -406,6 +394,18 @@ impl Note {
             Note::F8 => "F8",
             Note::Gb8 => "F#/Gb8",
             Note::G8 => "G8",
+            Note::Ab8 => "G#/Ab8",
+            Note::A8 => "A8",
+            Note::Bb8 => "A#/Bb8",
+            Note::B8 => "B8",
+            Note::C9 => "C9",
+            Note::Db9 => "C#/Db9",
+            Note::D9 => "D9",
+            Note::Eb9 => "D#/Eb9",
+            Note::E9 => "E9",
+            Note::F9 => "F9",
+            Note::Gb9 => "F#/Gb9",
+            Note::G9 => "G9",
         }
     }
 }
@@ -475,17 +475,17 @@ mod test {
 
     #[test]
     fn note_to_frequency() {
-        let a440_f64 = Note::A3.to_freq_f64();
+        let a440_f64 = Note::A4.to_freq_f64();
         assert!((a440_f64 - 440.0).abs() < 1E-10, "{} != 440", a440_f64);
 
-        let a440_f32 = Note::A3.to_freq_f32();
+        let a440_f32 = Note::A4.to_freq_f32();
         assert!((a440_f32 - 440.0).abs() < 1E-10, "{} != 440", a440_f32);
     }
 
     #[test]
     fn step() {
-        assert_eq!(Note::CMinus2.step(12), Ok(Note::CMinus1));
-        assert_eq!(Note::CMinus1.step(-12), Ok(Note::CMinus2));
+        assert_eq!(Note::CMinus1.step(12), Ok(Note::C0));
+        assert_eq!(Note::C0.step(-12), Ok(Note::CMinus1));
         assert_eq!(Note::B3.step(1), Ok(Note::C4));
         assert_eq!(Note::B3.step(100), Err(Error::NoteOutOfRange));
         assert_eq!(Note::B3.step(-100), Err(Error::NoteOutOfRange));
