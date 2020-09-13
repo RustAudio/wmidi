@@ -1,10 +1,13 @@
 [package]
 name = "wmidi"
-version = "3.1.0"
+version = "4.0.0"
 authors = ["wmedrano <will.s.medrano@gmail.com>"]
-description = "Midi parsing library with no heap allocations required."
+description = "Midi parsing library."
 repository = "https://github.com/wmedrano/wmidi"
+documentation = "https://docs.rs/wmidi"
 license = "MIT"
+keywords = ["midi", "music", "audio"]
+readme = "README.md"
 
 [lib]
 # Required to pass flags to criterion benchmark.
@@ -18,7 +21,7 @@ criterion = "0.3"
 
 [features]
 # Meta-features:
-default = ["std"] # without "std" wmidi uses libcore
+default = ["std"] # Without "std", wmidi uses libcore.
 std = []
 
 [[bench]]
