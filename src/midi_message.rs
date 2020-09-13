@@ -630,7 +630,7 @@ mod test {
         assert_eq!(
             MidiMessage::ControlChange(
                 Channel::Ch8,
-                ControlFunction::DamperPedal,
+                ControlFunction::DAMPER_PEDAL,
                 U7::try_from(55).unwrap()
             )
             .channel(),

@@ -3,7 +3,7 @@ use core::convert::TryFrom;
 
 /// A data byte that holds 7 bits of information.
 #[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
-pub struct U7(u8);
+pub struct U7(pub(crate) u8);
 
 impl U7 {
     /// The minimum value for a u7 data byte.

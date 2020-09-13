@@ -8,7 +8,11 @@ const MESSAGES: [wmidi::MidiMessage<'static>; 19] = [
     wmidi::MidiMessage::NoteOn(wmidi::Channel::Ch1, wmidi::Note::C3, wmidi::U7::MAX),
     wmidi::MidiMessage::NoteOff(wmidi::Channel::Ch2, wmidi::Note::A3, wmidi::U7::MIN),
     wmidi::MidiMessage::PolyphonicKeyPressure(wmidi::Channel::Ch3, wmidi::Note::B1, wmidi::U7::MAX),
-    wmidi::MidiMessage::ControlChange(wmidi::Channel::Ch4, wmidi::U7::MIN, wmidi::U7::MAX),
+    wmidi::MidiMessage::ControlChange(
+        wmidi::Channel::Ch4,
+        wmidi::ControlFunction::DAMPER_PEDAL,
+        wmidi::U7::MAX,
+    ),
     wmidi::MidiMessage::ProgramChange(wmidi::Channel::Ch5, wmidi::U7::MIN),
     wmidi::MidiMessage::ChannelPressure(wmidi::Channel::Ch6, wmidi::U7::MAX),
     wmidi::MidiMessage::PitchBendChange(wmidi::Channel::Ch7, wmidi::U14::MAX),

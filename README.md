@@ -32,6 +32,11 @@ fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
 
 # Changelog
 
+## MASTER
+
+* New ControlFunction type which pubicly wraps U7.
+* Constants and documentation for all ControlFunction values.
+
 ## 3.1
 
 * Rename `MidiMessage::wire_size()` to `MidiMessage::bytes_size()`.
