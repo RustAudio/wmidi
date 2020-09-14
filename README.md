@@ -40,10 +40,9 @@ fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
 
 ## 4.0.0
 
-* New ControlFunction type which pubicly wraps U7.
+* New ControlFunction type which simply wraps a U7.
 * Constants and documentation for all ControlFunction values.
 * Renumber Note enums/consts to be more consistent with midi; for example, C0 is now C1.
-* Merged SysEx and OwnedSysEx variants into a single Cow[u8] type.
 
 ## 3.1.0
 
