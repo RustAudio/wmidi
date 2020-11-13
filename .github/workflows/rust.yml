@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,9 +16,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install benchmarking utilities
+      run: cargo install critcmp
     - name: Build
       run: cargo build --verbose
     - name: Lint
-      run: cargo clippy
+      run: cargo clippy --all-targets -- -D warnings
     - name: Run tests
       run: cargo test --verbose
+    - name: Run new benchmark
+      run: cargo bench -- --noplot --save-baseline after
+    - name: Run baseline benchmark
+      run: git checkout $(git log --no-decorate --skip 1 | head -n 1 | cut -d ' ' -f2) && cargo bench -- --noplot --save-baseline before
+    - name: Compare benchmarks
+      run: critcmp before after
