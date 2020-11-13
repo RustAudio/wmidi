@@ -6,7 +6,7 @@ Midi encoding and decoding library suitable for real-time execution.
 [![docs.rs](https://docs.rs/wmidi/badge.svg)](https://docs.rs/wmidi)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![travis-ci](https://api.travis-ci.org/wmedrano/wmidi.svg?branch=master)](https://travis-ci.org/wmedrano/wmidi)
+[![Build Status](https://github.com/RustAudio/wmidi/workflows/Rust/badge.svg)](https://github.com/RustAudio/wmidi/actions?query=branch%3Amain)
 
 # Usage
 
