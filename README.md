@@ -16,8 +16,9 @@ use std::convert::TryFrom;
 // Decoding messages from bytes.
 fn handle_midi_message(bytes: &[u8]) -> Result<(), wmidi::FromBytesError> {
     let message = wmidi::MidiMessage::try_from(bytes)?;
-    if let wmidi::MidiMessage::NoteOn(_, note, _) = message {
-        println!("Singing {}", note);
+    if let wmidi::MidiMessage::NoteOn(_, note, val) = message {
+        let volume = u8::from(val) as u8 / 127.0;
+        println!("Singing {} at volume {}", note, volume);
     }
     Ok(())
 }
