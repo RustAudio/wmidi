@@ -15,6 +15,7 @@ readme = "README.md"
 bench = false
 
 [dependencies]
+integer-encoding = "2.1"
 
 [dev-dependencies]
 criterion = "0.3"

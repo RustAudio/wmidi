@@ -3,11 +3,15 @@
 #[macro_use]
 extern crate std;
 
+#[cfg(feature = "std")]
+extern crate integer_encoding;
+
 mod byte;
 mod cc;
 mod error;
 mod midi_message;
 mod note;
+pub mod smf;
 
 pub use byte::{U14, U7};
 pub use cc::ControlFunction;

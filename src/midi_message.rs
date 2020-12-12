@@ -158,6 +158,58 @@ impl<'a> MidiMessage<'a> {
         MidiMessage::try_from(bytes)
     }
 
+    /// Writes the data to `w`.
+    #[allow(clippy::range_plus_one)]
+    pub fn write<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<usize> {
+        match self {
+            MidiMessage::NoteOff(a, b, c) => {
+                w.write(&[0x80 | a.index(), u8::from(*b), u8::from(*c)])
+            }
+            MidiMessage::NoteOn(a, b, c) => {
+                w.write(&[0x90 | a.index(), u8::from(*b), u8::from(*c)])
+            }
+            MidiMessage::PolyphonicKeyPressure(a, b, c) => {
+                w.write(&[0xA0 | a.index(), *b as u8, u8::from(*c)])
+            }
+            MidiMessage::ControlChange(a, b, c) => {
+                w.write(&[0xB0 | a.index(), u8::from(*b), u8::from(*c)])
+            }
+            MidiMessage::ProgramChange(a, b) => w.write(&[0xC0 | a.index(), u8::from(*b)]),
+            MidiMessage::ChannelPressure(a, b) => w.write(&[0xD0 | a.index(), u8::from(*b)]),
+            MidiMessage::PitchBendChange(a, b) => {
+                let (b1, b2) = split_data(*b);
+                w.write(&[0xE0 | a.index(), b1, b2])
+            }
+            MidiMessage::SysEx(b) => {
+                let mut bytes_written = w.write(&[0xF0])?;
+                bytes_written += w.write(U7::data_to_bytes(b))?;
+                bytes_written += w.write(&[0xF7])?;
+                Ok(bytes_written)
+            }
+            #[cfg(feature = "std")]
+            MidiMessage::OwnedSysEx(ref b) => {
+                let mut bytes_written = w.write(&[0xF0])?;
+                bytes_written += w.write(U7::data_to_bytes(b))?;
+                bytes_written += w.write(&[0xF7])?;
+                Ok(bytes_written)
+            }
+            MidiMessage::MidiTimeCode(a) => w.write(&[0xF1, u8::from(*a)]),
+            MidiMessage::SongPositionPointer(a) => {
+                let (a1, a2) = split_data(*a);
+                w.write(&[0xF2, a1, a2])
+            }
+            MidiMessage::SongSelect(a) => w.write(&[0xF3, u8::from(*a)]),
+            MidiMessage::Reserved(a) => w.write(&[*a]),
+            MidiMessage::TuneRequest => w.write(&[0xF6]),
+            MidiMessage::TimingClock => w.write(&[0xF8]),
+            MidiMessage::Start => w.write(&[0xFA]),
+            MidiMessage::Continue => w.write(&[0xFB]),
+            MidiMessage::Stop => w.write(&[0xFC]),
+            MidiMessage::ActiveSensing => w.write(&[0xFE]),
+            MidiMessage::Reset => w.write(&[0xFF]),
+        }
+    }
+
     /// Copies the message as bytes to slice. If slice does not have enough capacity to fit the
     /// message, then an error is returned. On success, the number of bytes written will be
     /// returned. This should be the same number obtained from `self.bytes_size()`.
