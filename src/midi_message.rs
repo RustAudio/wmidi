@@ -113,7 +113,10 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
             .and_then(|b| valid_data_byte(*b));
         match bytes[0] & 0xF0 {
             0x80 => Ok(MidiMessage::NoteOff(chan, Note::from(data_a?), data_b?)),
-            0x90 => Ok(MidiMessage::NoteOn(chan, Note::from(data_a?), data_b?)),
+            0x90 => match data_b? {
+                U7::MIN => Ok(MidiMessage::NoteOff(chan, Note::from(data_a?), U7::MIN)),
+                _ => Ok(MidiMessage::NoteOn(chan, Note::from(data_a?), data_b?)),
+            },
             0xA0 => Ok(MidiMessage::PolyphonicKeyPressure(
                 chan,
                 Note::from(data_a?),
@@ -353,8 +356,8 @@ impl<'a> MidiMessage<'a> {
 }
 
 #[cfg(feature = "std")]
-#[deprecated(since = "3.1.0", note = "Use MidiMessage::copy_from_slice instead.")]
 impl<'a> io::Read for MidiMessage<'a> {
+    // Use MidiMessage::copy_from_slice instead.
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match self.copy_to_slice(buf) {
             Ok(n) => Ok(n),
@@ -487,11 +490,13 @@ mod test {
     fn try_from() {
         assert_eq!(
             MidiMessage::try_from([0x84].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "NoteOff event produces errors with only 1 byte",
         );
         assert_eq!(
             MidiMessage::try_from([0x84, 64].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "NoteOff event produces errors with only 2 bytes",
         );
         assert_eq!(
             MidiMessage::try_from([0x84, 64, 100].as_ref()),
@@ -499,16 +504,19 @@ mod test {
                 Channel::Ch5,
                 Note::E4,
                 U7::try_from(100).unwrap()
-            ))
+            )),
+            "NoteOff event is decoded.",
         );
 
         assert_eq!(
             MidiMessage::try_from([0x94].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "NoteOn event produces errors with only 1 byte",
         );
         assert_eq!(
             MidiMessage::try_from([0x94, 64].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "NoteOn event produces errors with only 2 bytes",
         );
         assert_eq!(
             MidiMessage::try_from([0x94, 64, 100].as_ref()),
@@ -516,40 +524,56 @@ mod test {
                 Channel::Ch5,
                 Note::E4,
                 U7::try_from(100).unwrap()
-            ))
+            )),
+            "NoteOn event is decoded.",
+        );
+        assert_eq!(
+            MidiMessage::try_from([0x94, 64, 0].as_ref()),
+            Ok(MidiMessage::NoteOff(
+                Channel::Ch5,
+                Note::E4,
+                U7::try_from(0).unwrap()
+            )),
+            "NoteOn message with 0 veloctiy decodes as NoteOff",
         );
 
         assert_eq!(
             MidiMessage::try_from([0xF0, 4, 8, 12, 16, 0xF7].as_ref()),
             Ok(MidiMessage::SysEx(
                 U7::try_from_bytes(&[4, 8, 12, 16]).unwrap()
-            ))
+            )),
+            "SysEx message is decoded with borrowed data.",
         );
         assert_eq!(
             MidiMessage::try_from([0xF0, 3, 6, 9, 12, 15, 0xF7, 125].as_ref()),
             Ok(MidiMessage::SysEx(
                 U7::try_from_bytes(&[3, 6, 9, 12, 15]).unwrap()
-            ))
+            )),
+            "SysEx message does not include bytes after the end byte.",
         );
         assert_eq!(
             MidiMessage::try_from([0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9].as_ref()),
-            Err(Error::NoSysExEndByte)
+            Err(Error::NoSysExEndByte),
+            "SysEx message without end status produces error.",
         );
 
         assert_eq!(
             MidiMessage::try_from([0xE4].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "PitchBend with single byte produces error.",
         );
         assert_eq!(
             MidiMessage::try_from([0xE4, 64].as_ref()),
-            Err(Error::NotEnoughBytes)
+            Err(Error::NotEnoughBytes),
+            "PitchBend with only 2 bytes produces error.",
         );
         assert_eq!(
             MidiMessage::try_from([0xE4, 64, 100].as_ref()),
             Ok(MidiMessage::PitchBendChange(
                 Channel::Ch5,
                 U14::try_from(12864).unwrap()
-            ))
+            )),
+            "PitchBendChange is decoded.",
         );
     }
 
