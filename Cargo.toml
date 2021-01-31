@@ -1,6 +1,6 @@
 [package]
 name = "wmidi"
-version = "4.0.1"
+version = "4.0.2"
 authors = ["wmedrano <will.s.medrano@gmail.com>"]
 description = "Midi parsing library."
 repository = "https://github.com/RustAudio/wmidi"
