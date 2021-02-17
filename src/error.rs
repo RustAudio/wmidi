@@ -24,6 +24,9 @@ pub enum FromBytesError {
     /// and ending in a end byte.
     UnexpectedNonSysExEndByte(u8),
 
+    /// The first byte of a midi message must be a status byte.
+    UnexpectedDataByte,
+
     /// Found a status byte, but expected a `U7` data byte.
     UnexpectedStatusByte,
 

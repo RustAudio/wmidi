@@ -102,6 +102,9 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
         if bytes.is_empty() {
             return Err(Error::NoBytes);
         }
+        if !is_status_byte(bytes[0]) {
+            return Err(Error::UnexpectedDataByte);
+        }
         let chan = Channel::from_index(bytes[0] & 0x0F)?;
         let data_a = bytes
             .get(1)
@@ -488,6 +491,16 @@ mod test {
 
     #[test]
     fn try_from() {
+        assert_eq!(
+            MidiMessage::try_from([].as_ref()),
+            Err(Error::NoBytes),
+            "no bytes produces an error",
+        );
+        assert_eq!(
+            MidiMessage::try_from([0x00].as_ref()),
+            Err(Error::UnexpectedDataByte),
+            "no status byte produces an error",
+        );
         assert_eq!(
             MidiMessage::try_from([0x84].as_ref()),
             Err(Error::NotEnoughBytes),
