@@ -20,6 +20,12 @@ impl U7 {
         U7(data)
     }
 
+    /// Create a `U7` from a `u8`. Only the 7 least significant bits of `note` are kept.
+    #[inline(always)]
+    pub const fn from_u8_lossy(data: u8) -> U7 {
+        U7(data & 0x7F)
+    }
+
     /// Convert a slice of `u8` into a slice of `U7`. If any of the data is out of range, then an
     /// error is returned.
     #[inline(always)]
@@ -227,5 +233,14 @@ mod tests {
                 U14::try_from(0x017F).unwrap()
             ]),
         );
+    }
+
+    #[test]
+    fn test_from_u8_lossy() {
+        assert_eq!(U7::from_u8_lossy(0), U7::try_from(0).unwrap());
+        assert_eq!(U7::from_u8_lossy(64), U7::try_from(64).unwrap());
+        assert_eq!(U7::from_u8_lossy(127), U7::try_from(127).unwrap());
+        assert_eq!(U7::from_u8_lossy(128), U7::try_from(0).unwrap());
+        assert_eq!(U7::from_u8_lossy(200), U7::try_from(72).unwrap());
     }
 }

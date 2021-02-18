@@ -5,13 +5,15 @@ use core::fmt;
 /// A midi note.
 ///
 /// The format for the enum is `$NOTE` `$MODIFIER?` `$OCTAVE`. Note can be a note from `A` to `G`.
-/// Modifier can be `b` for flat or `Sharp` for sharp. Octave is the number. The octaves `-2` and
-/// `-1` are `Minus2` and `Minus1` respectively.
+/// Modifier can be `b` for flat or `Sharp` for sharp. Octave is the number. The octave `-1` is
+/// represented as `Minus1`.
 /// # Example
 /// ```
 /// use wmidi::Note;
 /// let ab7_chord = [Note::AbMinus1, Note::C4, Note::Gb4]; // We omit the 5th for a jazzier sound
 /// let dmaj_chord = [Note::D2, Note::FSharp3, Note::A3];
+/// assert_eq!(u8::from(Note::C3), 48u8);
+/// assert_eq!(Note::from_u8_lossy(48), Note::C3);
 /// ```
 #[repr(u8)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -226,6 +228,12 @@ impl Note {
         core::mem::transmute(note)
     }
 
+    /// Create a note from a `u8`. Only the 7 least significant bits of `note` are used.
+    #[inline(always)]
+    pub fn from_u8_lossy(note: u8) -> Note {
+        Note::from(crate::U7::from_u8_lossy(note))
+    }
+
     /// The frequency using the standard 440Hz tuning.
     ///
     /// # Example
@@ -276,6 +284,7 @@ impl Note {
         }
     }
 
+    /// Get a `str` representation of the note. For example: `"C3"` or `"A#/Bb2"`.
     pub fn to_str(self) -> &'static str {
         match self {
             Note::CMinus1 => "C-1",
