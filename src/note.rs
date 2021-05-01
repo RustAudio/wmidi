@@ -504,8 +504,8 @@ mod test {
     #[test]
     fn test_debug() {
         let debug_str = format!("{:?}", Note::Bb3);
-        assert!(debug_str.contains("Bb"), debug_str);
-        assert!(debug_str.contains('3'), debug_str);
-        assert!(debug_str.contains("A#"), debug_str);
+        assert!(debug_str.contains("Bb"), "{}", debug_str);
+        assert!(debug_str.contains('3'), "{}", debug_str);
+        assert!(debug_str.contains("A#"), "{}", debug_str);
     }
 }

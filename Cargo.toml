@@ -1,13 +1,13 @@
 [package]
-name = "wmidi"
-version = "4.0.4"
 authors = ["wmedrano <will.s.medrano@gmail.com>"]
 description = "Midi parsing library."
-repository = "https://github.com/RustAudio/wmidi"
 documentation = "https://docs.rs/wmidi"
+keywords = ["midi", "music", "audio", "realtime", "real-time"]
 license = "MIT"
-keywords = ["midi", "music", "audio"]
+name = "wmidi"
 readme = "README.md"
+repository = "https://github.com/RustAudio/wmidi"
+version = "4.0.5"
 
 [lib]
 # Required to pass flags to criterion benchmark.
@@ -25,5 +25,5 @@ default = ["std"] # Without "std", wmidi uses libcore.
 std = []
 
 [[bench]]
-name = "bench"
 harness = false
+name = "bench"
