@@ -246,7 +246,7 @@ impl Note {
     #[inline(always)]
     pub fn to_freq_f32(self) -> f32 {
         let exp = (f32::from(self as u8) + 36.376_316) / 12.0;
-        2f32.powf(exp)
+        2_f32.powf(exp)
     }
 
     /// The frequency using the standard 440Hz tuning.
@@ -261,7 +261,7 @@ impl Note {
     #[inline(always)]
     pub fn to_freq_f64(self) -> f64 {
         let exp = (f64::from(self as u8) + 36.376_316_562_295_91) / 12.0;
-        2f64.powf(exp)
+        2_f64.powf(exp)
     }
 
     /// Get the note relative to `self`.
