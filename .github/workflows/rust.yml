@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Lint
-      run: cargo clippy --all-targets --all-features -- -D clippy::all -D clippy::pedantic
+      run: cargo clippy --all-targets --all-features -- -D clippy::all
     - name: Run tests
       run: cargo test --verbose
     - name: Run new benchmark
