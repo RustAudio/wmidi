@@ -8,10 +8,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  benchmark:
     runs-on: ubuntu-latest
-
+    env:
+      # A different directory is required so that checkouting out the main
+      # branch doesn't affect the PR branch.
+      CARGO_TARGET_DIR: /tmp/target
     steps:
     - name: Checkout PR
       uses: actions/checkout@v2
