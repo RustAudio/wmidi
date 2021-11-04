@@ -15,6 +15,8 @@ jobs:
       # branch doesn't affect the PR branch.
       CARGO_TARGET_DIR: /tmp/target
     steps:
+    - name: Set up Rust Cache
+      uses: Swatinem/rust-cache@v1
     - name: Checkout PR
       uses: actions/checkout@v2
     - name: Install benchmarking utilities
