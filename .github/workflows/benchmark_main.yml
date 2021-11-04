@@ -1,4 +1,4 @@
-name: Benchmark Against Previous Commit
+name: benchmark-main
 
 on:
   push:

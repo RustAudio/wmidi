@@ -1,4 +1,4 @@
-name: Benchmark PR
+name: benchmark-pr
 
 on:
   pull_request:
