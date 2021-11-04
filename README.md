@@ -8,8 +8,6 @@ Midi encoding and decoding library suitable for real-time execution.
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/RustAudio/wmidi/workflows/Rust/badge.svg)](https://github.com/RustAudio/wmidi/actions?query=branch%3Amain)
 
-[Old Repo](https://github.com/wmedrano/wmidi)
-
 # Usage
 
 ```rust
