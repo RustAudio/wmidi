@@ -15,21 +15,19 @@ jobs:
       # branch doesn't affect the PR branch.
       CARGO_TARGET_DIR: /tmp/target
     steps:
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v1
     - name: Checkout PR
       uses: actions/checkout@v2
-    - name: PR Rust Cache
-      uses: Swatinem/rust-cache@v1
     - name: Install benchmarking utilities
       run: cargo install critcmp
-    - name: After
+    - name: Benchmark After
       run: git branch && cargo bench -- --noplot --save-baseline after
-    - name: Checkout main
+    - name: Checkout Main
       uses: actions/checkout@v2
       with:
         ref: main
-    - name: Main Rust Cache
-      uses: Swatinem/rust-cache@v1
-    - name: Before
+    - name: Benchmark Before
       run: git branch && cargo bench -- --noplot --save-baseline before
     - name: Compare benchmarks
       run: critcmp before after
