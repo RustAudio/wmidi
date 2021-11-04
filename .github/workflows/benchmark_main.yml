@@ -1,4 +1,4 @@
-name: benchmark-main
+name: Benchmark Main
 
 on:
   push:
