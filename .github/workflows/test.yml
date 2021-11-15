@@ -13,9 +13,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
       - name: Rust Cache
         uses: Swatinem/rust-cache@v1
-      - uses: actions/checkout@v2
       - name: Build
         run: cargo build --verbose
       - name: Lint
@@ -27,8 +28,6 @@ jobs:
     needs: [test]
     if: contains('refs/heads/main', github.ref)
     steps:
-      - name: Install Dependencies
-        run: sudo apt-get -y install liblilv-dev lv2-examples mda-lv2 jackd libjack0 libjack-dev
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Rust Cache
