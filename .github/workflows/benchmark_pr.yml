@@ -2,7 +2,7 @@ name: Benchmark PR
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,19 +15,19 @@ jobs:
       # branch doesn't affect the PR branch.
       CARGO_TARGET_DIR: /tmp/target
     steps:
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v1
-    - name: Checkout PR
-      uses: actions/checkout@v2
-    - name: Install benchmarking utilities
-      run: cargo install critcmp
-    - name: Benchmark After
-      run: git branch && cargo bench -- --noplot --save-baseline after
-    - name: Checkout Main
-      uses: actions/checkout@v2
-      with:
-        ref: main
-    - name: Benchmark Before
-      run: git branch && cargo bench -- --noplot --save-baseline before
-    - name: Compare benchmarks
-      run: critcmp before after
+      - name: Checkout PR
+        uses: actions/checkout@v2
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+      - name: Install benchmarking utilities
+        run: cargo install critcmp
+      - name: Benchmark After
+        run: git branch && cargo bench -- --noplot --save-baseline after
+      - name: Checkout Main
+        uses: actions/checkout@v2
+        with:
+          ref: main
+      - name: Benchmark Before
+        run: git branch && cargo bench -- --noplot --save-baseline before
+      - name: Compare benchmarks
+        run: critcmp before after

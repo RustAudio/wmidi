@@ -2,7 +2,7 @@ name: Benchmark Main
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -11,15 +11,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Rust Cache
-      uses: Swatinem/rust-cache@v1
-    - name: Checkout repo
-      uses: actions/checkout@v2
-    - name: Install benchmarking utilities
-      run: cargo install critcmp
-    - name: After
-      run: cargo bench -- --noplot --save-baseline after
-    - name: Before
-      run: git checkout $(git log --no-decorate --skip 1 | head -n 1 | cut -d ' ' -f2) && cargo bench -- --noplot --save-baseline before
-    - name: Compare benchmarks
-      run: critcmp before after
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Set up Rust Cache
+        uses: Swatinem/rust-cache@v1
+      - name: Install benchmarking utilities
+        run: cargo install critcmp
+      - name: After
+        run: cargo bench -- --noplot --save-baseline after
+      - name: Before
+        run: git checkout $(git log --no-decorate --skip 1 | head -n 1 | cut -d ' ' -f2) && cargo bench -- --noplot --save-baseline before
+      - name: Compare benchmarks
+        run: critcmp before after
