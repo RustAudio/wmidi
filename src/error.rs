@@ -49,7 +49,7 @@ impl fmt::Display for FromBytesError {
     }
 }
 
-/// An error that can occurr converting a midi message to a bytes slice.
+/// An error that can occur converting a midi message to a bytes slice.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ToSliceError {
     /// The destination buffer cannot fit all the bytes.

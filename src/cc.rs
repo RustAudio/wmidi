@@ -23,7 +23,7 @@ use crate::byte::U7;
 /// * 64 - 119: Single-byte controllers
 /// * 120 - 127: Channel mode messages
 ///
-/// Setting the MSB on a continous controller resets the LSB to zero.
+/// Setting the MSB on a continuous controller resets the LSB to zero.
 /// The LSB can be omitted afterwards if the finer resolution is not needed.
 ///
 /// Channel mode messages affect the entire instrument and
@@ -155,11 +155,11 @@ impl ControlFunction {
     /// played at a reduced volume.
     pub const SOFT_PEDAL: ControlFunction = ControlFunction(U7(67));
     /// [MIDI 1.0] This switch turns on (value >= 64) the monophonic legato response
-    /// mode for that channel, where recieving a NoteOn while a note is already
+    /// mode for that channel, where receiving a NoteOn while a note is already
     /// playing will change the pitch of the current note accordingly (without
-    /// replaying the attack or re-attacking the enveloppes).
+    /// replaying the attack or re-attacking the envelopes).
     pub const LEGATO_FOOTSWITCH: ControlFunction = ControlFunction(U7(68));
-    /// [MIDI 1.0] Additionnal controller for hold functions that don't match
+    /// [MIDI 1.0] Additional controller for hold functions that don't match
     /// the specified definition of DamperPedal (64).
     pub const HOLD_2: ControlFunction = ControlFunction(U7(69));
     /// [MIDI 1.0] Remappable Sound Controller, Default Name: "Sound Variation"
@@ -311,7 +311,7 @@ impl ControlFunction {
     pub const UNDEFINED_118: ControlFunction = ControlFunction(U7(118));
     pub const UNDEFINED_119: ControlFunction = ControlFunction(U7(119));
 
-    /// [MIDI 1.0] Indicates that the reciever should immediately silence (without
+    /// [MIDI 1.0] Indicates that the receiver should immediately silence (without
     /// going through the release phase and ignoring sustain) all notes currently
     /// sounding on that channel. May also be used to turn off lights.
     pub const ALL_SOUND_OFF: ControlFunction = ControlFunction(U7(120));
@@ -347,24 +347,24 @@ impl ControlFunction {
     ///
     /// [GM2] Turns off all Notes sounding on the specified Channel.
     pub const ALL_NOTES_OFF: ControlFunction = ControlFunction(U7(123));
-    /// [MIDI 1.0] Same as AllNotesOff (123), then set reciever to mode 1 (omni-on, poly)
+    /// [MIDI 1.0] Same as AllNotesOff (123), then set receiver to mode 1 (omni-on, poly)
     /// or 2 (omni-on, mono) based on the current mode.
     ///
     /// [GM2] Same as AllNotesOff (123), since GM2 does not support Omni mode.
     pub const OMNI_MODE_ON: ControlFunction = ControlFunction(U7(124));
-    /// [MIDI 1.0] Same as AllNotesOff (123), then set reciever to mode 3 (omni-off, poly)
+    /// [MIDI 1.0] Same as AllNotesOff (123), then set receiver to mode 3 (omni-off, poly)
     /// or 4 (omni-off, mono) based on the current mode.
     ///
     /// [GM2] Same as AllNotesOff (123), since GM2 does not support Omni mode.
     pub const OMNI_MODE_OFF: ControlFunction = ControlFunction(U7(125));
-    /// [MIDI 1.0] Same as AllNotesOff (123), then set reciever to mode 2 (omni-on, mono)
+    /// [MIDI 1.0] Same as AllNotesOff (123), then set receiver to mode 2 (omni-on, mono)
     /// or 4 (omni-off, mono) based on the current mode. The value byte indicates how many
     /// channels to use, with 0 being "auto".
     ///
     /// [GM2] Same as AllNotesOff (123), then set the **channel** to mode 4. Will be
     /// ignored if the value byte is not equal to 1 of if the channel is a rhythm channel.
     pub const MONO_OPERATION: ControlFunction = ControlFunction(U7(126));
-    /// [MIDI 1.0] Same as AllNotesOff (123), then set reciever to mode 1 (omni-on, poly)
+    /// [MIDI 1.0] Same as AllNotesOff (123), then set receiver to mode 1 (omni-on, poly)
     /// or 3 (omni-off, poly) based on the current mode.
     ///
     /// [GM2] Same as AllNotesOff (123), then set the **channel** to mode 3.
