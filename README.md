@@ -1,6 +1,6 @@
 # WMIDI
 
-Midi encoding and decoding library suitable for real-time execution.
+Midi encoding and decoding library.
 
 [![crates.io](https://img.shields.io/crates/v/wmidi.svg)](https://crates.io/crates/wmidi)
 [![docs.rs](https://docs.rs/wmidi/badge.svg)](https://docs.rs/wmidi)
@@ -30,6 +30,12 @@ fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
     bytes
 }
 ```
+
+## Features
+
+* Supports `no_std` environments.
+* No memory allocations (therefore realtime safe) for parsing and encoding.
+* No memory allocations for creating `MidiMessage`, except for `MidiMessage::OwnedSysEx`.
 
 ## Testing & Benchmarking
 
