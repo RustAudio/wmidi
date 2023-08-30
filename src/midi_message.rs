@@ -158,8 +158,7 @@ impl<'a> TryFrom<&'a [u8]> for MidiMessage<'a> {
 }
 
 impl<'a> MidiMessage<'a> {
-    /// Construct a midi message from bytes. Use `MidiMessage::try_from(bytes)` instead.
-    #[deprecated(since = "2.0.0", note = "Use MidiMessage::try_from instead.")]
+    /// Construct a midi message from bytes.
     pub fn from_bytes(bytes: &'a [u8]) -> Result<Self, Error> {
         MidiMessage::try_from(bytes)
     }
@@ -355,6 +354,16 @@ impl<'a> MidiMessage<'a> {
         // that values from 1..end_i are valid data bytes.
         let data_bytes = unsafe { U7::from_bytes_unchecked(&bytes[1..end_i]) };
         Ok(MidiMessage::SysEx(data_bytes))
+    }
+
+    /// Convert the message to a vector of bytes. Prefer using
+    /// `copy_to_slice` if possible for better performance.
+    #[cfg(feature = "std")]
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut data = vec![0; self.bytes_size()];
+        // Unwrapping is ok as data has enough capacity for the data.
+        self.copy_to_slice(&mut data).unwrap();
+        data
     }
 }
 
