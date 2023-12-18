@@ -630,8 +630,9 @@ mod test {
         assert_eq!(b, [0xF0, 10, 20, 30, 40, 50, 0xF7, 0]);
     }
 
+    #[cfg(feature = "std")]
     #[test]
-    fn drop_unowned_sysex() {
+    fn drop_unowned_sysex_with_std() {
         assert_eq!(
             MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap()).drop_unowned_sysex(),
             None
@@ -655,6 +656,19 @@ mod test {
         );
     }
 
+    #[test]
+    fn drop_unowned_sysex_with_nostd() {
+        assert_eq!(
+            MidiMessage::SysEx(U7::try_from_bytes(&[1, 2, 3]).unwrap()).drop_unowned_sysex(),
+            None
+        );
+        assert_eq!(
+            MidiMessage::TuneRequest.drop_unowned_sysex(),
+            Some(MidiMessage::TuneRequest)
+        );
+    }
+
+    #[cfg(feature = "std")]
     #[test]
     fn to_owned() {
         assert_eq!(

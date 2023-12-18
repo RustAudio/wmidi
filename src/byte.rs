@@ -11,6 +11,16 @@ impl U7 {
     /// The maximum value for a u7 data byte.
     pub const MAX: U7 = U7(0x80 - 0x01);
 
+    /// Create a new `U7` or return an error if it is out of range.
+    #[inline(always)]
+    pub fn new(data: u8) -> Result<U7, Error> {
+        if data > u8::from(U7::MAX) {
+            Err(Error::DataByteOutOfRange)
+        } else {
+            Ok(U7(data))
+        }
+    }
+
     /// Convert a `u8` into a `U7` without bounds checking.
     ///
     /// # Safety
@@ -65,11 +75,7 @@ impl TryFrom<u8> for U7 {
 
     #[inline(always)]
     fn try_from(data: u8) -> Result<U7, Error> {
-        if data > u8::from(U7::MAX) {
-            Err(Error::DataByteOutOfRange)
-        } else {
-            Ok(U7(data))
-        }
+        U7::new(data)
     }
 }
 
@@ -158,7 +164,7 @@ mod tests {
 
     #[test]
     fn try_from_out_of_range_fails() {
-        for n in 0x80..=std::u8::MAX {
+        for n in 0x80..=u8::MAX {
             assert_eq!(U7::try_from(n), Err(Error::DataByteOutOfRange));
         }
     }
@@ -204,7 +210,7 @@ mod tests {
 
     #[test]
     fn try_from_out_of_range_16_fails() {
-        for n in 0x4000..=std::u16::MAX {
+        for n in 0x4000..=u16::MAX {
             assert_eq!(U14::try_from(n), Err(Error::U14OutOfRange));
         }
     }

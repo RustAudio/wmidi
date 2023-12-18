@@ -23,6 +23,8 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D clippy::all
       - name: Test
         run: cargo test --verbose
+      - name: Test nostd
+        run: cargo test --no-default-features
   release:
     runs-on: ubuntu-latest
     needs: [test]

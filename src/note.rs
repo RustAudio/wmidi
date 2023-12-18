@@ -482,6 +482,7 @@ impl fmt::Display for Note {
 mod test {
     use super::*;
 
+    #[cfg(feature = "std")]
     #[test]
     fn note_to_frequency() {
         let a440_f64 = Note::A4.to_freq_f64();

@@ -393,12 +393,11 @@ impl From<ControlFunction> for u8 {
 mod test {
     use super::*;
     use crate::U7;
-    use std::convert::TryFrom;
 
     #[test]
     fn from_u7() {
         for value in 0..128 {
-            let data = U7::try_from(value).unwrap();
+            let data = U7::new(value).unwrap();
             let cc = ControlFunction::from(data);
             assert_eq!(value, cc.into());
         }
