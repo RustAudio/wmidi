@@ -1,14 +1,13 @@
-name: Benchmark Main
-
+# Benchmark HEAD in the main branch against the previous commit.
+name: benchmark_main
 on:
   push:
     branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
-  build:
+  benchmark:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo

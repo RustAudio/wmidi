@@ -1,5 +1,5 @@
-name: Build/Test/Release
-
+# Runs general build and test logic.
+name: test
 on:
   push:
     branches: [main]
@@ -8,9 +8,16 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
-  test:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Lint
+        run: cargo clippy --all-targets --all-features -- -D clippy::all
+        continue-on-error: true
+  unit_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -23,9 +30,11 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D clippy::all
       - name: Test
         run: cargo test --verbose
+      - name: Test nostd
+        run: cargo test --no-default-features
   release:
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [unit_tests]
     if: contains('refs/heads/main', github.ref)
     steps:
       - name: Checkout Repository
