@@ -1,5 +1,5 @@
 # Benchmark the PR against the main branch.
-name: Benchmark PR
+name: benchmark_pr
 on:
   pull_request:
     branches: [main]

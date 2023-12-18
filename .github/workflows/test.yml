@@ -1,5 +1,5 @@
 # Runs general build and test logic.
-name: Build/Test/Release
+name: test
 on:
   push:
     branches: [main]
@@ -17,7 +17,7 @@ jobs:
       - name: Lint
         run: cargo clippy --all-targets --all-features -- -D clippy::all
         continue-on-error: true
-  test:
+  unit_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
