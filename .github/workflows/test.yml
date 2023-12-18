@@ -10,6 +10,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Lint
+        run: cargo clippy --all-targets --all-features -- -D clippy::all
+        continue-on-error: true
   test:
     runs-on: ubuntu-latest
     steps:
