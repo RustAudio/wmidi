@@ -1,12 +1,11 @@
+# Benchmark HEAD in the main branch against the previous commit.
 name: Benchmark Main
-
 on:
   push:
     branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ubuntu-latest

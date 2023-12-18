@@ -1,5 +1,5 @@
+# Runs general build and test logic.
 name: Build/Test/Release
-
 on:
   push:
     branches: [main]
@@ -8,7 +8,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   lint:
     runs-on: ubuntu-latest

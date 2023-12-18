@@ -1,12 +1,11 @@
+# Benchmark the PR against the main branch.
 name: Benchmark PR
-
 on:
   pull_request:
     branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   benchmark:
     runs-on: ubuntu-latest
