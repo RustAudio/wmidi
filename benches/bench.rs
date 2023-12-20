@@ -96,10 +96,6 @@ fn bench_from_bytes(c: &mut Criterion) {
 }
 
 fn bench_notes(c: &mut Criterion) {
-    let all_notes: Vec<wmidi::Note> = (0..128)
-        .map(|n| wmidi::Note::try_from(n).unwrap())
-        .collect();
-    let all_notes = black_box(all_notes);
     c.bench_function("Note::try_from", |b| {
         b.iter(|| {
             let mut notes = [wmidi::Note::LOWEST_NOTE; 128];
@@ -120,6 +116,14 @@ fn bench_notes(c: &mut Criterion) {
             }
         })
     });
+}
+
+#[cfg(feature = "std")]
+fn bench_frequency(c: &mut Criterion) {
+    let all_notes: Vec<wmidi::Note> = (0..128)
+        .map(|n| wmidi::Note::try_from(n).unwrap())
+        .collect();
+    let all_notes = black_box(all_notes);
     c.bench_function("Note::to_freq_f32", |b| {
         b.iter(|| {
             let mut freqs = [0f32; 128];
@@ -149,6 +153,15 @@ fn bench_notes(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benchmarks, bench_to_slice, bench_from_bytes, bench_notes);
+#[cfg(not(feature = "std"))]
+fn bench_frequency(_: &mut Criterion) {}
+
+criterion_group!(
+    benchmarks,
+    bench_to_slice,
+    bench_from_bytes,
+    bench_notes,
+    bench_frequency
+);
 
 criterion_main!(benchmarks);
