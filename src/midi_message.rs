@@ -5,6 +5,7 @@ use core::convert::TryFrom;
 use std::{io, vec::Vec};
 
 /// Holds information based on the Midi 1.0 spec.
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MidiMessage<'a> {
     /// This message is sent when a note is released (ended).
@@ -398,6 +399,7 @@ pub type Song = U7;
 
 /// The MIDI channel. There are 16 channels. They are numbered between 1 and 16
 /// inclusive, or indexed between 0 and 15 inclusive.
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Channel {
     Ch1,
