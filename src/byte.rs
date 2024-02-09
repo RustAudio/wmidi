@@ -2,6 +2,7 @@ use crate::Error;
 use core::convert::TryFrom;
 
 /// A data byte that holds 7 bits of information.
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct U7(pub(crate) u8);
 
@@ -80,6 +81,7 @@ impl TryFrom<u8> for U7 {
 }
 
 /// A combination of 2 data bytes that holds 14 bits of information.
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct U14(u16);
 

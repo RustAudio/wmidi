@@ -16,6 +16,7 @@ use core::fmt;
 /// assert_eq!(Note::from_u8_lossy(48), Note::C3);
 /// ```
 #[repr(u8)]
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Note {
     CMinus1 = 0,
