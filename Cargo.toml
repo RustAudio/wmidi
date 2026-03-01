@@ -15,6 +15,7 @@ version = "4.0.10"
 bench = false
 
 [dependencies]
+defmt = { version = "0.3.5", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"
@@ -23,6 +24,7 @@ criterion = "0.3"
 # Meta-features:
 default = ["std"] # Without "std", wmidi uses libcore.
 std = []
+defmt-03 = ["dep:defmt"]
 
 [[bench]]
 harness = false
