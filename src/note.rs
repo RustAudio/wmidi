@@ -4,6 +4,7 @@ use core::fmt;
 
 /// Precomputed frequencies (Hz) for all 128 MIDI notes using standard A440 tuning.
 /// Formula: 2^((n + 36.37631656229591) / 12)
+#[allow(clippy::excessive_precision)]
 const FREQ_F64: [f64; 128] = [
     8.175798915643707e+00, // 0  CMinus1
     8.661957218027251e+00, // 1  DbMinus1
@@ -137,6 +138,7 @@ const FREQ_F64: [f64; 128] = [
 
 /// Precomputed frequencies (Hz) for all 128 MIDI notes using standard A440 tuning.
 /// Formula: 2^((n + 36.376316) / 12)
+#[allow(clippy::excessive_precision)]
 const FREQ_F32: [f32; 128] = [
     8.1757987e+00_f32, // 0  CMinus1
     8.6619569e+00_f32, // 1  DbMinus1
@@ -768,7 +770,10 @@ mod test {
             assert!(
                 rel_err < 1e-4,
                 "note={}: got {} expected {} rel_err={}",
-                midi, got, expected, rel_err
+                midi,
+                got,
+                expected,
+                rel_err
             );
         }
     }
@@ -787,7 +792,10 @@ mod test {
             assert!(
                 rel_err < 1e-4,
                 "note={}: got {} expected {} rel_err={}",
-                midi, got, expected, rel_err
+                midi,
+                got,
+                expected,
+                rel_err
             );
         }
     }
