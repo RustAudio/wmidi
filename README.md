@@ -45,6 +45,10 @@ fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
 
 ## Changelog
 
+### Unreleased
+
+* Use `error` from `core`.
+
 ### 4.0.0
 
 * New ControlFunction type which simply wraps a U7.
