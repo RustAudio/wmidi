@@ -48,6 +48,7 @@ fn midi_to_bytes(message: wmidi::MidiMessage<'_>) -> Vec<u8> {
 ### Unreleased
 
 * Use `error` from `core`.
+* Added `MidiMessage::set_channel()` method.
 
 ### 4.0.0
 
