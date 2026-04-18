@@ -339,6 +339,20 @@ impl<'a> MidiMessage<'a> {
         }
     }
 
+    /// Set the channel of the MIDI message, if applicable for the message type.
+    pub fn set_channel(&mut self, channel: Channel) {
+        match self {
+            MidiMessage::NoteOff(c, ..) => *c = channel,
+            MidiMessage::NoteOn(c, ..) => *c = channel,
+            MidiMessage::PolyphonicKeyPressure(c, ..) => *c = channel,
+            MidiMessage::ControlChange(c, ..) => *c = channel,
+            MidiMessage::ProgramChange(c, ..) => *c = channel,
+            MidiMessage::ChannelPressure(c, ..) => *c = channel,
+            MidiMessage::PitchBendChange(c, ..) => *c = channel,
+            _ => {}
+        }
+    }
+
     #[inline(always)]
     fn new_sysex(bytes: &'a [u8]) -> Result<Self, Error> {
         debug_assert!(bytes[0] == 0xF0);
@@ -697,5 +711,16 @@ mod test {
             Some(Channel::Ch8)
         );
         assert_eq!(MidiMessage::Start.channel(), None);
+    }
+
+    #[test]
+    fn set_channel() {
+        let mut msg = MidiMessage::ControlChange(
+            Channel::Ch8,
+            ControlFunction::DAMPER_PEDAL,
+            U7::try_from(55).unwrap(),
+        );
+        msg.set_channel(Channel::Ch9);
+        assert_eq!(msg.channel(), Some(Channel::Ch9));
     }
 }
