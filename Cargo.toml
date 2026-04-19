@@ -17,7 +17,7 @@ bench = false
 [dependencies]
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.8"
 
 [features]
 # Meta-features:
