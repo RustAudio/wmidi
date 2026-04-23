@@ -28,6 +28,7 @@ use crate::byte::U7;
 ///
 /// Channel mode messages affect the entire instrument and
 /// are only valid when sent over the instrument's "basic channel".
+#[cfg_attr(feature="defmt-03", derive(defmt::Format))]
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub struct ControlFunction(pub U7);
 
